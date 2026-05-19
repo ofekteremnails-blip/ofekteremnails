@@ -6,8 +6,8 @@ function getSheet() {
   let sheet = ss.getSheetByName('תורים');
   if (!sheet) {
     sheet = ss.insertSheet('תורים');
-    sheet.appendRow(['ID','שירות','תאריך','שעה','שם לקוחה','טלפון','הערות','סטטוס','נוצר ב']);
-    sheet.getRange(1,1,1,9).setFontWeight('bold').setBackground('#b76e79').setFontColor('#fff');
+    sheet.appendRow(['ID','שירות','תאריך','שעה','שם לקוחה','טלפון','הערות','סטטוס','משך','נוצר ב']);
+    sheet.getRange(1,1,1,10).setFontWeight('bold').setBackground('#b76e79').setFontColor('#fff');
     sheet.setFrozenRows(1);
   }
   return sheet;
@@ -272,6 +272,7 @@ function saveAppointment(data) {
     data.id, data.serviceName, data.date, data.time,
     data.clientName, data.clientPhone, data.notes || '',
     data.status || 'pending',
+    Number(data.duration) || 60,
     new Date().toLocaleString('he-IL')
   ]);
 

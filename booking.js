@@ -49,6 +49,12 @@ function saveToSheets(appt) {
   document.body.appendChild(s);
 }
 
+// מנסה להסיק משך שירות לפי שם - fallback לתורים ישנים ללא עמודת משך
+function _guessDuration(serviceName) {
+  const svc = getServices().find(s => s.name === serviceName);
+  return svc ? svc.duration : 60;
+}
+
 async function loadFromSheets() {
   return new Promise((resolve) => {
     const callbackName = 'sheetsCallback_' + Date.now();
@@ -79,7 +85,7 @@ async function loadFromSheets() {
           clientPhone: phone,
           notes:       String(r['הערות'] || ''),
           status:      String(r['סטטוס'] || 'pending'),
-          duration:    60,
+          duration:    Number(r['משך'] || r['duration'] || 0) || _guessDuration(String(r['שירות'] || '')),
         };
       }).filter(a => a.id && a.date);
       saveAppointments(appts);
