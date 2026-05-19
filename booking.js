@@ -214,12 +214,65 @@ function fromMinutes(mins) {
   return `${h}:${m}`;
 }
 
-// בונה רשימת טווחים פנויים מתוך טווחי עבודה אחרי הורדת תורים קיימים
-function getFreeIntervals(workIntervals, appointments) {
-  // appointments: [{ start: minutes, end: minutes }]
-  // workIntervals: [{ start: minutes, end: minutes }]
+// ── TIMEZONE ──
+// כל חישובי תאריך/שעה מבוססים על timezone ישראל (Asia/Jerusalem)
+const TZ = 'Asia/Jerusalem';
+
+function nowInTZ() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: TZ }));
+}
+
+function todayStrTZ() {
+  const d = nowInTZ();
+  return d.getFullYear() + '-'
+    + String(d.getMonth() + 1).padStart(2, '0') + '-'
+    + String(d.getDate()).padStart(2, '0');
+}
+
+function isPastDateTZ(dateStr) {
+  return dateStr < todayStrTZ();
+}
+
+// ── SLOT LOCKING (מניעת double booking) ──
+// lock נשמר ב-localStorage: { key: { lockedBy, expiresAt } }
+const LOCK_TTL_MS = 45 * 1000; // 45 שניות
+
+function _lockKey(dateStr, timeStr) { return `lock_${dateStr}_${timeStr}`; }
+
+function lockSlot(dateStr, timeStr) {
+  const key = _lockKey(dateStr, timeStr);
+  const existing = DB.get(key, null);
+  const now = Date.now();
+  // אם יש lock פעיל של מישהו אחר - נכשל
+  if (existing && existing.expiresAt > now && existing.lockedBy !== _myLockId()) return false;
+  DB.set(key, { lockedBy: _myLockId(), expiresAt: now + LOCK_TTL_MS });
+  return true;
+}
+
+function releaseSlot(dateStr, timeStr) {
+  const key = _lockKey(dateStr, timeStr);
+  const existing = DB.get(key, null);
+  if (existing && existing.lockedBy === _myLockId()) DB.set(key, null);
+}
+
+function isSlotLocked(dateStr, timeStr) {
+  const key = _lockKey(dateStr, timeStr);
+  const lock = DB.get(key, null);
+  if (!lock) return false;
+  if (lock.expiresAt <= Date.now()) { DB.set(key, null); return false; }
+  return lock.lockedBy !== _myLockId();
+}
+
+function _myLockId() {
+  let id = sessionStorage.getItem('_lockId');
+  if (!id) { id = generateId(); sessionStorage.setItem('_lockId', id); }
+  return id;
+}
+
+// ── FREE INTERVALS ──
+function getFreeIntervals(workIntervals, bookedIntervals) {
   let free = workIntervals.map(w => ({ ...w }));
-  appointments.forEach(appt => {
+  bookedIntervals.forEach(appt => {
     const next = [];
     free.forEach(interval => {
       if (appt.end <= interval.start || appt.start >= interval.end) {
@@ -236,34 +289,34 @@ function getFreeIntervals(workIntervals, appointments) {
 
 function getAvailableSlots(dateStr, durationMins) {
   const settings = getSettings();
-  const dow = new Date(dateStr).getDay();
+  // השתמש ב-getDay() על תאריך ישראלי - dateStr הוא תמיד YYYY-MM-DD
+  const [y, mo, d] = dateStr.split('-').map(Number);
+  const dow = new Date(y, mo - 1, d).getDay();
   const day = settings.workDays[dow];
   if (!day || !day.active) return [];
-  if (settings.blockedDates.includes(dateStr)) return [];
+  if ((settings.blockedDates || []).includes(dateStr)) return [];
 
   const interval = settings.slotInterval || 15;
 
-  // בנה טווחי עבודה: שעות רגילות + שעות מיוחדות
+  // שעות עבודה רגילות + מיוחדות
   const workIntervals = [{ start: toMinutes(day.start), end: toMinutes(day.end) }];
   (settings.customHours || []).filter(c => c.date === dateStr).forEach(c => {
     workIntervals.push({ start: toMinutes(c.start), end: toMinutes(c.end) });
   });
 
-  // תורים קיימים כטווחים תפוסים
+  // תורים קיימים (לא מבוטלים)
   const bookedIntervals = getAppointments()
     .filter(a => a.date === dateStr && a.status !== 'cancelled')
-    .map(a => {
-      const s = toMinutes(a.time);
-      return { start: s, end: s + (Number(a.duration) || 60) };
-    });
+    .map(a => ({ start: toMinutes(a.time), end: toMinutes(a.time) + (Number(a.duration) || 60) }));
 
   const freeIntervals = getFreeIntervals(workIntervals, bookedIntervals);
 
-  // מצא כל נקודת התחלה שבה durationMins נכנס בתוך טווח פנוי
   const slots = [];
   freeIntervals.forEach(({ start, end }) => {
     for (let t = start; t + durationMins <= end; t += interval) {
-      slots.push(fromMinutes(t));
+      const timeStr = fromMinutes(t);
+      // סנן slots נעולים על ידי משתמשים אחרים
+      if (!isSlotLocked(dateStr, timeStr)) slots.push(timeStr);
     }
   });
 
@@ -272,15 +325,18 @@ function getAvailableSlots(dateStr, durationMins) {
 
 function isWorkDay(dateStr) {
   const settings = getSettings();
-  const date = new Date(dateStr);
-  const dow = date.getDay();
+  const [y, mo, d] = dateStr.split('-').map(Number);
+  const dow = new Date(y, mo - 1, d).getDay();
   const day = settings.workDays[dow];
-  return day && day.active && !settings.blockedDates.includes(dateStr);
+  return !!(day && day.active && !(settings.blockedDates || []).includes(dateStr));
 }
 
 function formatDate(dateStr) {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  // פרסור ישיר ללא תלות ב-timezone של הדפדפן
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('he-IL', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
 }
 
 function sendWhatsApp(phone, msg) {

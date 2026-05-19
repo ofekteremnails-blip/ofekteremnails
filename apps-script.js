@@ -204,6 +204,39 @@ function doGet(e) {
       .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
   }
 
+  if (action === 'addWaitlist') {
+    addToWaitlist(e.parameter);
+    const json = JSON.stringify({ success: true });
+    const out  = callback ? callback + '(' + json + ')' : json;
+    return ContentService.createTextOutput(out)
+      .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
+  }
+
+  if (action === 'loadWaitlist') {
+    const waitlist = loadWaitlist();
+    const json = JSON.stringify(waitlist);
+    const out  = callback ? callback + '(' + json + ')' : json;
+    return ContentService.createTextOutput(out)
+      .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
+  }
+
+  if (action === 'removeWaitlist') {
+    removeFromWaitlist(e.parameter.id);
+    const json = JSON.stringify({ success: true });
+    const out  = callback ? callback + '(' + json + ')' : json;
+    return ContentService.createTextOutput(out)
+      .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
+  }
+
+  // Smart waitlist matching: מצא מתאימים ל-slot שהתפנה
+  if (action === 'matchWaitlist') {
+    const match = matchWaitlistToSlot(e.parameter.date, parseInt(e.parameter.freedMins || '0', 10));
+    const json = JSON.stringify(match || null);
+    const out  = callback ? callback + '(' + json + ')' : json;
+    return ContentService.createTextOutput(out)
+      .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
+  }
+
   // action === 'load'
   try {
     const sheet = getSheet();
@@ -490,4 +523,89 @@ function loadAppointments() {
       return obj;
     });
   } catch(err) { return []; }
+}
+
+// ── WAITLIST SHEET ──
+function getWaitlistSheet() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  let sheet = ss.getSheetByName('המתנה');
+  if (!sheet) {
+    sheet = ss.insertSheet('המתנה');
+    sheet.appendRow(['ID','שם','טלפון','שירות','משך','תאריך','סטטוס','נוצר ב']);
+    sheet.getRange(1,1,1,8).setFontWeight('bold').setBackground('#b76e79').setFontColor('#fff');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function addToWaitlist(params) {
+  const sheet = getWaitlistSheet();
+  const id = params.id || (Date.now().toString(36) + Math.random().toString(36).slice(2,6));
+  sheet.appendRow([
+    id,
+    params.name || '',
+    params.phone || '',
+    params.service || '',
+    parseInt(params.duration || '60', 10),
+    params.date || '',
+    'waiting',
+    params.createdAt || new Date().toISOString()
+  ]);
+}
+
+function loadWaitlist() {
+  const sheet = getWaitlistSheet();
+  if (sheet.getLastRow() <= 1) return [];
+  const rows = sheet.getDataRange().getValues();
+  const headers = rows[0];
+  return rows.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = row[i]);
+    return {
+      id:        String(obj['ID'] || ''),
+      name:      String(obj['שם'] || ''),
+      phone:     String(obj['טלפון'] || ''),
+      service:   String(obj['שירות'] || ''),
+      duration:  parseInt(obj['משך'] || '60', 10),
+      date:      String(obj['תאריך'] || ''),
+      status:    String(obj['סטטוס'] || 'waiting'),
+      createdAt: String(obj['נוצר ב'] || '')
+    };
+  }).filter(r => r.id && r.status === 'waiting');
+}
+
+function removeFromWaitlist(id) {
+  const sheet = getWaitlistSheet();
+  if (sheet.getLastRow() <= 1) return;
+  const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat().map(String);
+  for (let i = 0; i < ids.length; i++) {
+    if (ids[i] === String(id)) { sheet.deleteRow(i + 2); return; }
+  }
+}
+
+// Smart FIFO matching: מוצא את הראשון שנכנס ושמשך השירות שלו <= freedMins
+function matchWaitlistToSlot(date, freedMins) {
+  const waitlist = loadWaitlist()
+    .filter(w => w.date === date)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt)); // FIFO
+
+  // priority 1: התאמה מדויקת למשך
+  // priority 2: משך קצר יותר שנכנס בתוך הזמן שהתפנה
+  const match = waitlist.find(w => w.duration <= freedMins);
+  return match || null;
+}
+
+// notifyUser: שולח WhatsApp דרך link (ניתן להרחיב ל-SMS/Email)
+function notifyUser(waitlistEntry, date, time) {
+  // בשלב זה מחזיר את הנתונים - ה-admin ישלח ידנית
+  return {
+    phone: waitlistEntry.phone,
+    name:  waitlistEntry.name,
+    waLink: 'https://wa.me/' + String(waitlistEntry.phone).replace(/\D/g,'')
+      + '?text=' + encodeURIComponent(
+        'היי ' + waitlistEntry.name + '! 💅\n'
+        + 'התפנה מקום ביום ' + date + ' בשעה ' + time + '!\n'
+        + 'רוצה לקבוע? לחצי כאן לקביעת תור 🌸'
+      )
+  };
 }

@@ -1,7 +1,9 @@
 ﻿// ── STATE ──
 let selected = { services: [], date: null, time: null };
 let calYear, calMonth;
-let currentClient = null; // לקוחה מחוברת
+let currentClient = null;
+let _slotLockTimer = null;   // countdown interval
+let _slotLockExpiry = null;  // timestamp
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
@@ -311,14 +313,13 @@ function renderCalendar() {
 
   const firstDay = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = todayStrTZ();
 
   let html = '';
   for (let i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dateObj = new Date(calYear, calMonth, d);
-    const isPast = dateObj < today;
+    const isPast = dateStr < todayStr;
     const isWork = isWorkDay(dateStr);
     const isSelected = selected.date === dateStr;
     let cls = 'cal-cell';
@@ -341,8 +342,11 @@ function renderCalendar() {
 }
 
 function selectDate(dateStr) {
+  // שחרר lock קודם אם היה slot נבחר
+  if (selected.date && selected.time) releaseSlot(selected.date, selected.time);
   selected.date = dateStr;
   selected.time = null;
+  _clearSlotLockUI();
   document.getElementById('toStep3').disabled = false;
   renderCalendar();
 }
@@ -382,10 +386,55 @@ function renderSlots() {
 }
 
 function selectSlot(time, el) {
+  // שחרר lock קודם
+  if (selected.time) releaseSlot(selected.date, selected.time);
+
+  const locked = lockSlot(selected.date, time);
+  if (!locked) {
+    // מישהו אחר תפס את ה-slot באותה שנייה - רענן
+    el.disabled = true;
+    el.textContent = 'תפוס';
+    el.classList.add('taken');
+    renderSlots();
+    return;
+  }
+
   selected.time = time;
   document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('toStep4').disabled = false;
+  _startSlotLockCountdown();
+}
+
+function _startSlotLockCountdown() {
+  _clearSlotLockUI();
+  _slotLockExpiry = Date.now() + LOCK_TTL_MS;
+
+  let timerEl = document.getElementById('slotLockTimer');
+  if (!timerEl) {
+    timerEl = document.createElement('div');
+    timerEl.id = 'slotLockTimer';
+    timerEl.style.cssText = 'text-align:center;font-size:13px;color:#f0a500;font-weight:600;margin-top:10px;padding:8px;background:#fff8e6;border-radius:8px;border:1px solid #ffc107';
+    document.getElementById('slotsGrid').after(timerEl);
+  }
+
+  _slotLockTimer = setInterval(() => {
+    const remaining = Math.ceil((_slotLockExpiry - Date.now()) / 1000);
+    if (remaining <= 0) {
+      _clearSlotLockUI();
+      selected.time = null;
+      document.getElementById('toStep4').disabled = true;
+      document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+      renderSlots();
+      return;
+    }
+    if (timerEl) timerEl.textContent = `⏳ ה-slot שמור לך עוד ${remaining} שניות`;
+  }, 1000);
+}
+
+function _clearSlotLockUI() {
+  if (_slotLockTimer) { clearInterval(_slotLockTimer); _slotLockTimer = null; }
+  document.getElementById('slotLockTimer')?.remove();
 }
 
 // ── WAITLIST ──
@@ -474,7 +523,19 @@ function submitBooking(e) {
   if (!phone) { showFormError('אנא הכניסי מספר טלפון'); return; }
   if (!/^[0-9+\-\s]{9,15}$/.test(phone)) { showFormError('מספר טלפון לא תקין'); return; }
 
+  // בדוק שה-slot עדיין פנוי (re-validate לפני שמירה)
   const totalDuration = selected.services.reduce((sum, s) => sum + s.duration, 0);
+  const available = getAvailableSlots(selected.date, totalDuration);
+  if (!available.includes(selected.time)) {
+    showFormError('השעה שבחרת כבר נתפסה על ידי מישהו אחר. אנא בחרי שעה אחרת');
+    _clearSlotLockUI();
+    selected.time = null;
+    document.getElementById('toStep4').disabled = true;
+    showStep(3);
+    renderSlots();
+    return;
+  }
+
   const servicesNames = selected.services.map(s => s.name).join(', ');
   const servicesIcons = selected.services.map(s => s.icon).join(' ');
 
@@ -493,11 +554,15 @@ function submitBooking(e) {
     createdAt: new Date().toISOString(),
   };
 
+  // שחרר lock לפני שמירה (התור עצמו יחסום את ה-slot)
+  releaseSlot(selected.date, selected.time);
+  _clearSlotLockUI();
+
   const appointments = getAppointments();
   appointments.push(appt);
   saveAppointments(appointments);
   saveToSheets(appt);
-  // שמור לקוח רק אם חדש
+
   const existingAppts = getAppointments().filter(a => {
     const norm = p => String(p||'').replace(/\D/g,'');
     return norm(a.clientPhone) === norm(phone) && a.id !== appt.id;
