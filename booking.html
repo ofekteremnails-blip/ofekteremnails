@@ -1,0 +1,283 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>קביעת תור | עופק תרם ניילס</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="booking.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Heebo:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#c97a96"/>
+  <link rel="apple-touch-icon" href="logo.png"/>
+  <meta name="apple-mobile-web-app-title" content="OT Nails"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+</head>
+<body class="booking-page">
+
+  <!-- NAVBAR -->
+  <nav class="navbar scrolled" id="navbar">
+    <a href="index.html"><img src="logo.png" alt="עופק תרם ניילס" class="logo"/></a>
+    <a href="index.html" class="home-btn-nav">🏠 דף הבית</a>
+    <ul>
+      <li><a href="index.html">🏠 דף הבית</a></li>
+      <li><a href="index.html#about">אודות</a></li>
+      <li><a href="index.html#services">שירותים</a></li>
+      <li><a href="index.html#gallery">גלריה</a></li>
+      <li><a href="my-appointments.html" class="nav-cta" style="background:#8b5a7d">👤 התורים שלי</a></li>
+      <li><a href="booking.html" class="nav-cta">קביעת תור</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger">&#9776;</button>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <button class="close-menu" id="closeMenu">✕</button>
+    <ul>
+      <li><a href="index.html" class="mob-link">🏠 דף הבית</a></li>
+      <li><a href="index.html#about" class="mob-link">אודות</a></li>
+      <li><a href="index.html#services" class="mob-link">שירותים</a></li>
+      <li><a href="index.html#gallery" class="mob-link">גלריה</a></li>
+      <li><a href="my-appointments.html" class="mob-link">👤 התורים שלי</a></li>
+      <li><a href="booking.html" class="mob-link">קביעת תור</a></li>
+    </ul>
+  </div>
+
+  <main class="booking-main">
+    <div class="booking-header">
+      <span class="section-tag">זימון תור</span>
+      <h1>קביעת תור<br/><em>מקצועי ומהיר</em></h1>
+      <p>בחרי שירות, תאריך ושעה שמתאימים לך</p>
+    </div>
+
+    <!-- STEPS INDICATOR -->
+    <div class="steps-bar">
+      <div class="step active" data-step="1"><span>1</span><p>שירות</p></div>
+      <div class="step-line"></div>
+      <div class="step" data-step="2"><span>2</span><p>תאריך</p></div>
+      <div class="step-line"></div>
+      <div class="step" data-step="3"><span>3</span><p>שעה</p></div>
+      <div class="step-line"></div>
+      <div class="step" data-step="4"><span>4</span><p>פרטים</p></div>
+    </div>
+
+    <!-- CLIENT GREETING -->
+    <div class="client-greeting hidden" id="clientGreeting">
+      <span class="greeting-avatar" id="greetingAvatar"></span>
+      <div>
+        <p class="greeting-name" id="greetingName"></p>
+        <p class="greeting-sub">שמחה לראותך שוב! פרטייך מולאו אוטומטית בשבילך ❤️</p>
+      </div>
+      <button class="greeting-logout" onclick="logoutClient()">התנתק</button>
+    </div>
+
+    <!-- MY APPOINTMENTS -->
+    <div class="my-appointments-card hidden" id="myAppointmentsCard">
+      <div class="my-appts-header">
+        <h3>📋 התורים שלי</h3>
+        <button class="btn-toggle-appts" onclick="toggleMyAppointments()">▼</button>
+      </div>
+      <div class="my-appts-list" id="myApptsList"></div>
+    </div>
+
+    <div class="booking-card">
+
+      <!-- STEP LOGIN -->
+      <div class="booking-step" id="stepLogin">
+        <h2>שלום! בואי נתחיל במספר הטלפון שלך</h2>
+        <p style="color:#aaa;font-size:14px;margin-bottom:24px">אם קבעת אצלנו בעבר, פרטייך ימולאו אוטומטית</p>
+        <div class="form-group">
+          <label>מספר טלפון *</label>
+          <input type="tel" id="loginPhone" placeholder="05X-XXXXXXX" inputmode="numeric"/>
+        </div>
+        <div class="step-nav">
+          <button class="btn-next" id="loginBtn" style="width:100%">המשך ←</button>
+        </div>
+        <p class="login-skip"><a href="#" onclick="skipLogin()"> או קבעי תור בלי התחברות</a></p>
+      </div>
+
+      <!-- STEP 1: SERVICE -->
+      <div class="booking-step" id="step1">
+        <h2>איזה שירותים תרצי?</h2>
+        <p style="color:#aaa;font-size:14px;margin-bottom:20px">ניתן לבחור מספר שירותים לתור אחד</p>
+        <div class="services-pick" id="servicesList"></div>
+        <div id="selectedServicesPreview" style="margin-top:20px;padding:16px;background:#f9f9f9;border-radius:12px;display:none">
+          <strong style="display:block;margin-bottom:8px;color:var(--dark)">שירותים שנבחרו:</strong>
+          <div id="selectedServicesList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+          <p style="margin-top:12px;font-size:14px;color:#666"><strong>זמן כולל:</strong> <span id="totalDuration">0</span> דקות</p>
+        </div>
+        <div class="step-nav">
+          <button class="btn-next" id="toStep2" disabled>המשך ←</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: DATE -->
+      <div class="booking-step hidden" id="step2">
+        <h2>בחרי תאריך</h2>
+        <div class="calendar-wrap">
+          <div class="cal-header">
+            <button id="prevMonth">&#8250;</button>
+            <span id="calTitle"></span>
+            <button id="nextMonth">&#8249;</button>
+          </div>
+          <div class="cal-days-header">
+            <span>א'</span><span>ב'</span><span>ג'</span><span>ד'</span><span>ה'</span><span>ו'</span><span>ש'</span>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+        <div class="step-nav">
+          <button class="btn-back" id="toStep1Back">→ חזרה</button>
+          <button class="btn-next" id="toStep3" disabled>המשך ←</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: TIME -->
+      <div class="booking-step hidden" id="step3">
+        <h2>בחרי שעה</h2>
+        <p class="step-sub" id="selectedDateLabel"></p>
+        <div class="slots-grid" id="slotsGrid"></div>
+        <p class="no-slots hidden" id="noSlots">אין שעות פנויות ביום זה 😔<br/>אנא בחרי תאריך אחר
+          <div class="waitlist-offer hidden" id="waitlistOffer">
+            <p>או הירשמי לרשימת המתנה ליום זה ונודיע לך אם יתפנה מקום</p>
+            <button class="btn-waitlist" onclick="joinWaitlist()">+ הירשמי לרשימת המתנה</button>
+          </div>
+        </p>
+        <div class="step-nav">
+          <button class="btn-back" id="toStep2Back">→ חזרה</button>
+          <button class="btn-next" id="toStep4" disabled>המשך ←</button>
+        </div>
+      </div>
+
+      <!-- STEP 4: DETAILS -->
+      <div class="booking-step hidden" id="step4">
+        <h2>פרטים אישיים</h2>
+        <div class="booking-summary-mini" id="summaryMini"></div>
+        <form id="bookingForm" novalidate>
+          <div class="form-group">
+            <label>שם מלא *</label>
+            <input type="text" id="clientName" placeholder="שם פרטי ושם משפחה" required/>
+          </div>
+          <div class="form-group">
+            <label>מספר טלפון *</label>
+            <input type="tel" id="clientPhone" placeholder="05X-XXXXXXX" required/>
+          </div>
+          <div class="form-group">
+            <label>הערות (אופציונלי)</label>
+            <textarea id="clientNotes" placeholder="עיצוב מיוחד, בקשות מיוחדות..." rows="3"></textarea>
+          </div>
+          <div class="step-nav">
+            <button type="button" class="btn-back" id="toStep3Back">→ חזרה</button>
+            <button type="submit" class="btn-confirm">אישור תור 💅</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- STEP 5: CONFIRMATION -->
+      <div class="booking-step hidden" id="step5">
+        <div class="confirm-wrap">
+          <div class="confirm-icon">⏳</div>
+          <h2>התור נקלט!</h2>
+          <div class="confirm-status-badge">ממתין לאישור על ידי עופק</div>
+          <div class="confirm-details" id="confirmDetails"></div>
+          <p class="confirm-note">לחצי על וואטסאפ כדי לקבל אישור מעופק ולודא שהתור נקבע 💅</p>
+          <div class="confirm-btns">
+            <a id="confirmWA" href="#" target="_blank" class="btn-wa">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.855L0 24l6.335-1.508A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.371l-.36-.214-3.727.977.994-3.634-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
+              לחצי לאישור בוואטסאפ
+            </a>
+            <a href="index.html" class="btn-outline" style="color:var(--dark);border-color:var(--pink)">🏠 דף הבית</a>
+            <a href="booking.html" class="btn-outline" style="color:var(--dark);border-color:var(--pink)">קבעי תור נוסף</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- PWA INSTALL BANNER -->
+  <div id="pwaBanner" style="display:none">
+    <div class="pwa-banner-content">
+      <img src="logo.png" class="pwa-banner-logo" alt="logo"/>
+      <div class="pwa-banner-text">
+        <strong>הוסיפי את האפליקציה 💅</strong>
+        <span id="pwaBannerSub"></span>
+      </div>
+      <button class="pwa-banner-close" onclick="closePwaBanner()">✕</button>
+    </div>
+    <div class="pwa-banner-steps" id="pwaBannerSteps"></div>
+  </div>
+
+  <footer>
+    <img src="logo.png" alt="logo" class="footer-logo"/>
+    <p>© 2025 עופק תרם ניילס · כל הזכויות שמורות</p>
+  </footer>
+
+  <script src="booking.js?v=19"></script>
+  <script src="booking-ui.js?v=19"></script>
+  <script src="chatbot-widget.js"></script>
+  <script>
+    (function() {
+      if (localStorage.getItem('pwaBannerDismissed')) return;
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const isAndroid = /android/i.test(navigator.userAgent);
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+      if (isStandalone) return;
+      if (!isIOS && !isAndroid) return;
+
+      const banner = document.getElementById('pwaBanner');
+      const sub = document.getElementById('pwaBannerSub');
+      const steps = document.getElementById('pwaBannerSteps');
+      const siteUrl = 'https://ofekteremnailss.vercel.app/';
+      const inAppBrowser = /instagram|fbav|fban|fb_iab|whatsapp|snapchat/i.test(navigator.userAgent);
+
+      if (inAppBrowser) {
+        sub.textContent = 'פתחי בדפדפן כדי להתקין את האפליקציה';
+        steps.innerHTML = `
+          <div class="pwa-inapp-warn">
+            <span class="pwa-warn-icon">⚠️</span>
+            <p>את פתחת את האתר בתוך אפליקציה — כדי להתקין צריך לפתוח בדפדפן הרגיל</p>
+          </div>
+          <button class="pwa-open-browser" onclick="navigator.clipboard && navigator.clipboard.writeText('${siteUrl}').then(()=>{ this.textContent='הלינק הועתק! עכשיו פתחי ${isIOS ? 'Safari' : 'Chrome'} והדבקי ✅'; })">&#128203; העתיקי את הלינק לדפדפן</button>
+          <p class="pwa-url-display">${siteUrl}</p>`;
+      } else if (isIOS) {
+        sub.textContent = 'התקיני בחינם דרך Safari';
+        steps.innerHTML = `
+          <div class="pwa-step">
+            <span class="pwa-step-num">1</span>
+            <span>ודאי שאת בדפדפן <strong>Safari</strong> — הסמל של מצפן עם שורה בתחתית</span>
+          </div>
+          <div class="pwa-step">
+            <span class="pwa-step-num">2</span>
+            <span>לחצי על כפתור השיתוף 📤 <strong>בתחתית המסך</strong> (קופסא עם חץ למעלה)</span>
+          </div>
+          <div class="pwa-step">
+            <span class="pwa-step-num">3</span>
+            <span>גללי למטה ולחצי <strong>"הוספי למסך הבית"</strong> → לחצי הוסף 🌸</span>
+          </div>`;
+      } else {
+        sub.textContent = 'התקיני בחינם דרך Chrome';
+        steps.innerHTML = `
+          <div class="pwa-step">
+            <span class="pwa-step-num">1</span>
+            <span>ודאי שאת בדפדפן <strong>Chrome</strong> — הסמל של עיגול צבעוני בתחתית</span>
+          </div>
+          <div class="pwa-step">
+            <span class="pwa-step-num">2</span>
+            <span>לחצי על שלוש הנקודות &#8942; <strong>בפינה העליונה הימנית</strong></span>
+          </div>
+          <div class="pwa-step">
+            <span class="pwa-step-num">3</span>
+            <span>בחרי <strong>"הוסף למסך הבית"</strong> → לחצי התקן 🌸</span>
+          </div>`;
+      }
+
+      setTimeout(() => { banner.style.display = 'block'; }, 2000);
+    })();
+
+    function closePwaBanner() {
+      document.getElementById('pwaBanner').style.display = 'none';
+      localStorage.setItem('pwaBannerDismissed', '1');
+    }
+  </script>
+</body>
+</html>

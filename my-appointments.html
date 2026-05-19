@@ -1,0 +1,276 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>התורים שלי | עופק תרם ניילס</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="booking.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Heebo:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body class="booking-page">
+
+  <!-- NAVBAR -->
+  <nav class="navbar scrolled" id="navbar">
+    <a href="index.html"><img src="logo.png" alt="עופק תרם ניילס" class="logo"/></a>
+    <a href="index.html" class="home-btn-nav">🏠 דף הבית</a>
+    <ul>
+      <li><a href="index.html">🏠 דף הבית</a></li>
+      <li><a href="index.html#about">אודות</a></li>
+      <li><a href="index.html#services">שירותים</a></li>
+      <li><a href="index.html#gallery">גלריה</a></li>
+      <li><a href="my-appointments.html" class="nav-cta">התורים שלי</a></li>
+      <li><a href="booking.html">קביעת תור</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger">&#9776;</button>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <button class="close-menu" id="closeMenu">✕</button>
+    <ul>
+      <li><a href="index.html" class="mob-link">🏠 דף הבית</a></li>
+      <li><a href="index.html#about" class="mob-link">אודות</a></li>
+      <li><a href="index.html#services" class="mob-link">שירותים</a></li>
+      <li><a href="index.html#gallery" class="mob-link">גלריה</a></li>
+      <li><a href="my-appointments.html" class="mob-link">התורים שלי</a></li>
+      <li><a href="booking.html" class="mob-link">קביעת תור</a></li>
+    </ul>
+  </div>
+
+  <main class="booking-main">
+    
+    <!-- LOGIN STEP -->
+    <div class="booking-card" id="loginStep">
+      <div class="booking-header">
+        <span class="section-tag">אזור אישי</span>
+        <h1>התורים שלי<br/><em>צפייה וניהול</em></h1>
+        <p>הכניסי את מספר הטלפון שלך כדי לראות את התורים שלך</p>
+      </div>
+      
+      <div class="form-group" style="max-width:400px;margin:40px auto">
+        <label>מספר טלפון *</label>
+        <input type="tel" id="phoneInput" placeholder="05X-XXXXXXX" inputmode="numeric" style="font-size:18px;padding:16px"/>
+      </div>
+      <p id="phoneErr" style="color:#e05;font-size:14px;text-align:center;display:none;margin-top:-20px">מספר לא תקין</p>
+      <div style="text-align:center;margin-top:30px">
+        <button class="btn-next" id="loginBtn" style="padding:16px 48px;font-size:18px">התחברי ←</button>
+      </div>
+    </div>
+
+    <!-- APPOINTMENTS VIEW -->
+    <div class="booking-card" id="appointmentsView" style="display:none">
+      <div class="booking-header">
+        <div class="cl-user-header" style="justify-content:center;margin-bottom:30px">
+          <div class="cl-avatar" id="userAvatar" style="width:60px;height:60px;font-size:24px"></div>
+          <div style="text-align:center">
+            <strong id="userName" style="font-size:22px;display:block;margin-bottom:4px"></strong>
+            <span id="userPhone" style="font-size:14px;color:#aaa"></span>
+          </div>
+        </div>
+        <h1 style="margin-top:20px">התורים שלי</h1>
+      </div>
+
+      <div id="apptsList" class="cl-appts-list" style="margin-top:30px"></div>
+
+      <div style="text-align:center;margin-top:40px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="booking.html" class="btn-next" style="display:inline-block;padding:14px 32px">➕ קבעי תור חדש</a>
+        <button class="btn-outline" onclick="doLogout()" style="padding:14px 32px;color:var(--dark);border-color:var(--pink)">התנתק</button>
+        <a href="index.html" class="btn-outline" style="display:inline-block;padding:14px 32px;color:var(--dark);border-color:var(--pink)">🏠 דף הבית</a>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <img src="logo.png" alt="logo" class="footer-logo"/>
+    <p>© 2025 עופק תרם ניילס · כל הזכויות שמורות</p>
+  </footer>
+
+  <script>
+    const WEBAPP_URL = 'https://script.google.com/macros/s/PASTE_YOUR_WEBAPP_URL_HERE/exec';
+
+    // Mobile menu
+    document.getElementById('hamburger')?.addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.add('open');
+    });
+    document.getElementById('closeMenu')?.addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.remove('open');
+    });
+    document.querySelectorAll('.mob-link').forEach(link => {
+      link.addEventListener('click', () => {
+        document.getElementById('mobileMenu').classList.remove('open');
+      });
+    });
+
+    // Check if already logged in
+    const saved = localStorage.getItem('clientSession');
+    if (saved) {
+      try {
+        const client = JSON.parse(saved);
+        showAppointments(client);
+      } catch(e) {}
+    }
+
+    // Login
+    document.getElementById('loginBtn').addEventListener('click', doLogin);
+    document.getElementById('phoneInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    function doLogin() {
+      const phone = document.getElementById('phoneInput').value.trim();
+      const errEl = document.getElementById('phoneErr');
+      if (!phone || !/^[0-9+\-\s]{9,15}$/.test(phone)) {
+        errEl.style.display = 'block';
+        return;
+      }
+      errEl.style.display = 'none';
+      const btn = document.getElementById('loginBtn');
+      btn.textContent = 'מחפש...';
+      btn.disabled = true;
+
+      // טוען את כל התורים ומחפש את השם
+      const cb = 'ma' + Date.now();
+      const url = WEBAPP_URL + '?action=load&callback=' + cb;
+      window[cb] = (rows) => {
+        delete window[cb];
+        document.getElementById(cb)?.remove();
+        btn.textContent = 'התחברי ←';
+        btn.disabled = false;
+        
+        const norm = p => p.replace(/\D/g, '');
+        const normalizedPhone = norm(phone);
+        
+        // מחפש תור עם מספר הטלפון הזה כדי למצוא את השם
+        let clientName = null;
+        if (Array.isArray(rows) && rows.length > 0) {
+          console.log('דוגמה לשורה ראשונה:', rows[0]);
+          console.log('כל השדות:', Object.keys(rows[0]));
+          
+          for (let r of rows) {
+            // נסה כמה אפשרויות לשדה הטלפון
+            let p = String(r['טלפון'] || r['phone'] || r['Phone'] || r['מספר טלפון'] || '');
+            if (p && !p.startsWith('0') && !p.startsWith('+') && p.length <= 9) p = '0' + p;
+            if (norm(p) === normalizedPhone) {
+              // נסה כמה אפשרויות לשדה השם
+              clientName = String(r['שם לקוחה'] || r['שם'] || r['name'] || r['Name'] || r['שם מלא'] || r['לקוח'] || '').trim();
+              console.log('מצאתי תור תואם! כל השדות:', r);
+              console.log('מצאתי שם:', clientName);
+              if (clientName) {
+                console.log('מצאתי שם:', clientName);
+                break;
+              }
+            }
+          }
+        }
+        
+        console.log('שם סופי:', clientName);
+        const client = { name: clientName, phone };
+        localStorage.setItem('clientSession', JSON.stringify(client));
+        showAppointments(client);
+      };
+      const s = document.createElement('script');
+      s.id = cb;
+      s.src = url;
+      s.onerror = () => {
+        delete window[cb];
+        btn.textContent = 'התחברי ←';
+        btn.disabled = false;
+        const client = { name: null, phone };
+        localStorage.setItem('clientSession', JSON.stringify(client));
+        showAppointments(client);
+      };
+      document.body.appendChild(s);
+    }
+
+    function showAppointments(client) {
+      console.log('showAppointments called with:', client);
+      document.getElementById('loginStep').style.display = 'none';
+      document.getElementById('appointmentsView').style.display = 'block';
+      document.getElementById('userAvatar').textContent = client.name ? client.name.charAt(0) : '👤';
+      
+      // אם אין שם - הצג "לקוח לא רשום" עם אפשרות להירשם
+      if (!client.name) {
+        document.getElementById('userName').innerHTML = '<span style="color:#f0a500">👤 לקוח לא רשום</span>';
+        const registerBtn = '<a href="booking.html" class="btn-next" style="display:inline-block;padding:12px 28px;margin-top:12px;font-size:16px">📝 הירשמי עכשיו</a>';
+        document.getElementById('userName').innerHTML += '<br/>' + registerBtn;
+      } else {
+        document.getElementById('userName').textContent = client.name;
+      }
+      
+      document.getElementById('userPhone').textContent = client.phone;
+      
+      const list = document.getElementById('apptsList');
+      list.innerHTML = '<p class="cl-loading">טוען תורים... ⏳</p>';
+
+      const cb = 'ma' + Date.now();
+      const url = WEBAPP_URL + '?action=load&callback=' + cb;
+      window[cb] = (rows) => {
+        delete window[cb];
+        document.getElementById(cb)?.remove();
+        const norm = p => p.replace(/\D/g, '');
+        const appts = (Array.isArray(rows) ? rows : []).map(r => {
+          let time = String(r['שעה'] || '');
+          if (time.includes('T') || time.includes('1899')) {
+            const d = new Date(time);
+            time = String(d.getUTCHours()).padStart(2,'0') + ':' + String(d.getUTCMinutes()).padStart(2,'0');
+          }
+          let date = String(r['תאריך'] || '');
+          if (date.includes('T') || date.includes('Z')) {
+            const d = new Date(date);
+            date = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+          }
+          let p = String(r['טלפון'] || '');
+          if (p && !p.startsWith('0') && !p.startsWith('+') && p.length <= 9) p = '0' + p;
+          return { serviceName: String(r['שירות'] || ''), date, time, status: String(r['סטטוס'] || ''), phone: p };
+        }).filter(a => norm(a.phone) === norm(client.phone) && (a.status === 'pending' || a.status === 'confirmed'))
+          .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+        if (appts.length === 0) {
+          const noApptsMsg = client.name 
+            ? '<p class="cl-empty">אין תורים פעילים כרגע 🌸</p>'
+            : '<p class="cl-empty">לא נמצאו תורים למספר זה.<br/>אם את לקוחה חדשה, קבעי תור ראשון! 💅</p>';
+          list.innerHTML = noApptsMsg;
+          return;
+        }
+        const waPhone = '972546827299';
+        list.innerHTML = appts.map(a => {
+          const statusEmoji = a.status === 'confirmed' ? '✅' : '⏳';
+          const statusText = a.status === 'confirmed' ? 'מאושר' : 'ממתין לאישור';
+          const statusColor = a.status === 'confirmed' ? '#25D366' : '#f0a500';
+          const d = new Date(a.date);
+          const dateLabel = d.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' });
+          const cancelMsg = encodeURIComponent(`היי עופק! 💅\nאני רוצה לבטל את התור שלי:\n💅 ${a.serviceName}\n📅 ${dateLabel}\n🕐 ${a.time}\nתודה!`);
+          const changeMsg = encodeURIComponent(`היי עופק! 💅\nאני רוצה לשנות את התור שלי:\n💅 ${a.serviceName}\n📅 ${dateLabel}\n🕐 ${a.time}\nאפשר לתאם זמן אחר?`);
+          return `
+            <div class="cl-appt-card">
+              <div class="cl-appt-status" style="color:${statusColor}">${statusEmoji} ${statusText}</div>
+              <div class="cl-appt-service">💅 ${a.serviceName}</div>
+              <div class="cl-appt-dt">📅 ${dateLabel} &nbsp;·&nbsp; 🕐 ${a.time}</div>
+              <div class="cl-appt-actions">
+                <a href="https://wa.me/${waPhone}?text=${changeMsg}" target="_blank" class="cl-appt-btn change">✏️ שינוי תור</a>
+                <a href="https://wa.me/${waPhone}?text=${cancelMsg}" target="_blank" class="cl-appt-btn cancel">✕ ביטול</a>
+              </div>
+              <div style="margin-top:8px;text-align:center;font-size:12px;color:#999">
+                ביטלת בטעות? <a href="https://wa.me/${waPhone}?text=${encodeURIComponent(`היי עופק! 💅\nביטלתי בטעות את התור:\n💅 ${a.serviceName}\n📅 ${dateLabel}\n🕐 ${a.time}\nאשמח להחזיר אותו!`)}" target="_blank" style="color:#e8a4b8;text-decoration:underline">↩️ החזרת תור</a>
+              </div>
+            </div>`;
+        }).join('');
+      };
+      const s = document.createElement('script');
+      s.id = cb;
+      s.src = url;
+      s.onerror = () => { delete window[cb]; list.innerHTML = '<p class="cl-empty">לא ניתן לטעון</p>'; };
+      document.body.appendChild(s);
+    }
+
+    function doLogout() {
+      localStorage.removeItem('clientSession');
+      document.getElementById('appointmentsView').style.display = 'none';
+      document.getElementById('loginStep').style.display = 'block';
+      document.getElementById('phoneInput').value = '';
+    }
+  </script>
+</body>
+</html>
