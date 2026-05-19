@@ -72,11 +72,30 @@ body {
   box-shadow: 0 1px 20px rgba(160,112,128,0.06);
 }
 .logo {
-  height: 60px;
+  height: 80px;
   object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
 }
 .home-btn-nav {
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1.5px solid rgba(255,255,255,0.25);
+  transition: all 0.3s;
+  margin-left: 16px;
+}
+.home-btn-nav:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.4);
+  transform: translateY(-1px);
 }
 .navbar ul {
   list-style: none;
@@ -282,7 +301,11 @@ body {
   100% { transform: scaleY(1); transform-origin: bottom; opacity: 0; }
 }
 
-/* ── BUTTONS ── */
+.navbar.scrolled .home-btn-nav {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.2);
+  color: #fff;
+}
 .btn-wa {
   display: inline-flex;
   align-items: center;
