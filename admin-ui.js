@@ -130,7 +130,9 @@ function doLogout() {
 function initAdmin() {
   requestNotificationPermission();
   showMiniLoader();
-  Promise.all([loadFromSheets(), loadSettingsFromSheets()]).then(() => {
+  Promise.all([loadFromSheets(), loadSettingsFromSheets(), loadClientsFromSheets().then(clients => {
+    if (clients && clients.length > 0) DB.set('clients_cache', clients);
+  })]).then(() => {
     hideMiniLoader();
     _renderDashboard();
   }).catch(() => {
@@ -965,6 +967,7 @@ function removeDuplicates() {
     window[cb] = (response) => {
       delete window[cb]; document.getElementById(cb)?.remove();
       if (response && response.success) {
+        DB.set('clients_cache', null);
         showToast(`✅ נמחקו ${response.removed} כפילויות`);
         renderClientsList();
       } else {
@@ -1000,6 +1003,7 @@ function editClient(oldPhone, oldName) {
     + '&newPhone=' + encodeURIComponent(newPhone.trim());
   window[cb] = () => {
     delete window[cb]; document.getElementById(cb)?.remove();
+    DB.set('clients_cache', null);
     showToast('✅ לקוח עודכן!');
     renderClientsList();
   };
@@ -1017,6 +1021,7 @@ function deleteClient(phone) {
       if (response && response.error) {
         showToast('⚠️ לא ניתן למחוק - יש ללקוח תורים פעילים. מחקי את התורים קודם', '#e05');
       } else {
+        DB.set('clients_cache', null);
         showToast('✅ לקוח וכל התורים שלו נמחקו');
         renderClientsList();
       }
@@ -1346,49 +1351,56 @@ function saveSettingsHandler() {
 }
 
 // ── CLIENTS LIST ──
-function renderClientsList() {
+function _displayClients(clients) {
   const search = document.getElementById('clientSearch')?.value.toLowerCase() || '';
   const list = document.getElementById('clientsList');
   if (!list) return;
-  list.innerHTML = '<p class="empty-msg">טוען לקוחות...</p>';
+  if (!clients || clients.length === 0) { list.innerHTML = emptyMsg('אין לקוחות רשומים עדיין'); return; }
+  const filtered = search
+    ? clients.filter(c => c.name.toLowerCase().includes(search) || c.phone.includes(search))
+    : clients;
+  if (filtered.length === 0) { list.innerHTML = emptyMsg('לא נמצאו תוצאות'); return; }
+  const appts = getAppointments();
+  list.innerHTML = filtered.map(c => {
+    const normPhone = (p) => p.replace(/\D/g, '');
+    const clientAppts = appts.filter(a => normPhone(a.clientPhone) === normPhone(c.phone) && a.status !== 'cancelled');
+    const lastAppt = clientAppts.sort((a,b) => b.date.localeCompare(a.date))[0];
+    let displayPhone = c.phone;
+    if (displayPhone && !displayPhone.startsWith('0') && !displayPhone.startsWith('+')) displayPhone = '0' + displayPhone;
+    return `
+      <div class="client-card">
+        <div class="client-avatar">${c.name.charAt(0)}</div>
+        <div class="client-info">
+          <strong>${sanitize(c.name)}</strong>
+          <span><a href="tel:${sanitize(displayPhone)}">${sanitize(displayPhone)}</a></span>
+          <span>תורים: ${clientAppts.length} | אחרון: ${lastAppt ? lastAppt.date : 'אין'}</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button onclick="viewClientGallery('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn" style="background:#e8f0ff;color:#1a5a9e;font-size:12px;padding:8px 12px">🖼️</button>
+          <button onclick="editClient('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn" style="background:#e8f8ef;color:#1a9e4a;font-size:12px;padding:8px 12px">✏️</button>
+          <a href="https://wa.me/${c.phone.replace(/\D/g,'')}" target="_blank" class="act-btn wa" style="font-size:12px;padding:8px 12px">💬</a>
+          <button onclick="deleteClient('${sanitize(c.phone)}')" class="act-btn del" style="font-size:12px;padding:8px 12px">🗑</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderClientsList() {
+  const list = document.getElementById('clientsList');
+  if (!list) return;
+  // הצג מ-cache מיד
+  const cached = DB.get('clients_cache', null);
+  if (cached && cached.length > 0) {
+    _displayClients(cached);
+  } else {
+    list.innerHTML = '<p class="empty-msg">טוען לקוחות...</p>';
+  }
+  // משוך עדכון ברקע
   loadClientsFromSheets().then(clients => {
-    if (!clients || clients.length === 0) {
-      list.innerHTML = emptyMsg('אין לקוחות רשומים עדיין');
-      return;
+    if (clients && clients.length > 0) {
+      DB.set('clients_cache', clients);
+      _displayClients(clients);
     }
-    const filtered = search
-      ? clients.filter(c => c.name.toLowerCase().includes(search) || c.phone.includes(search))
-      : clients;
-    if (filtered.length === 0) { list.innerHTML = emptyMsg('לא נמצאו תוצאות'); return; }
-    const appts = getAppointments();
-    list.innerHTML = filtered.map(c => {
-      const clientAppts = appts.filter(a => {
-        const normPhone = (p) => p.replace(/\D/g, '');
-        return normPhone(a.clientPhone) === normPhone(c.phone) && a.status !== 'cancelled';
-      });
-      const lastAppt = clientAppts.sort((a,b) => b.date.localeCompare(a.date))[0];
-      
-      let displayPhone = c.phone;
-      if (displayPhone && !displayPhone.startsWith('0') && !displayPhone.startsWith('+')) {
-        displayPhone = '0' + displayPhone;
-      }
-      
-      return `
-        <div class="client-card">
-          <div class="client-avatar">${c.name.charAt(0)}</div>
-          <div class="client-info">
-            <strong>${sanitize(c.name)}</strong>
-            <span><a href="tel:${sanitize(displayPhone)}">${sanitize(displayPhone)}</a></span>
-            <span>תורים: ${clientAppts.length} | אחרון: ${lastAppt ? lastAppt.date : 'אין'}</span>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button onclick="viewClientGallery('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn" style="background:#e8f0ff;color:#1a5a9e;font-size:12px;padding:8px 12px">🖼️</button>
-            <button onclick="editClient('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn" style="background:#e8f8ef;color:#1a9e4a;font-size:12px;padding:8px 12px">✏️</button>
-            <a href="https://wa.me/${c.phone.replace(/\D/g,'')}" target="_blank" class="act-btn wa" style="font-size:12px;padding:8px 12px">💬</a>
-            <button onclick="deleteClient('${sanitize(c.phone)}')" class="act-btn del" style="font-size:12px;padding:8px 12px">🗑</button>
-          </div>
-        </div>`;
-    }).join('');
   });
 }
 
