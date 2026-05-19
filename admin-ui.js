@@ -1362,7 +1362,7 @@ function _displayClients(clients) {
   if (filtered.length === 0) { list.innerHTML = emptyMsg('לא נמצאו תוצאות'); return; }
   const appts = getAppointments();
   list.innerHTML = filtered.map(c => {
-    const normPhone = (p) => p.replace(/\D/g, '');
+    const normPhone = (p) => String(p || '').replace(/\D/g, '');
     const clientAppts = appts.filter(a => normPhone(a.clientPhone) === normPhone(c.phone) && a.status !== 'cancelled');
     const lastAppt = clientAppts.sort((a,b) => b.date.localeCompare(a.date))[0];
     let displayPhone = c.phone;
