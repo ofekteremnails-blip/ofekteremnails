@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>התורים שלי | עופק תרם ניילס</title>
+  <title>התורים שלי | אופק תרם ניילס</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="stylesheet" href="booking.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Heebo:wght@300;400;600;700&display=swap" rel="stylesheet"/>
@@ -12,7 +12,7 @@
 
   <!-- NAVBAR -->
   <nav class="navbar scrolled" id="navbar">
-    <a href="index.html"><img src="logo.png" alt="עופק תרם ניילס" class="logo"/></a>
+    <a href="index.html"><img src="logo.png" alt="אופק תרם ניילס" class="logo"/></a>
     <a href="index.html" class="home-btn-nav">🏠 דף הבית</a>
     <ul>
       <li><a href="index.html">🏠 דף הבית</a></li>
@@ -84,7 +84,7 @@
 
   <footer>
     <img src="logo.png" alt="logo" class="footer-logo"/>
-    <p>© 2025 עופק תרם ניילס · כל הזכויות שמורות</p>
+    <p>© 2025 אופק תרם ניילס · כל הזכויות שמורות</p>
   </footer>
 
   <script>
@@ -241,8 +241,8 @@
           const statusColor = a.status === 'confirmed' ? '#25D366' : '#f0a500';
           const d = new Date(a.date);
           const dateLabel = d.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' });
-          const cancelMsg = encodeURIComponent(`היי עופק! 💅\nאני רוצה לבטל את התור שלי:\n💅 ${a.serviceName}\n📅 ${dateLabel}\n🕐 ${a.time}\nתודה!`);
-          const changeMsg = encodeURIComponent(`היי עופק! 💅\nאני רוצה לשנות את התור שלי:\n💅 ${a.serviceName}\n📅 ${dateLabel}\n🕐 ${a.time}\nאפשר לתאם זמן אחר?`);
+          const cancelMsg = encodeURIComponent(`היי אופק! 💅\nאני רוצה לבטל את התור שלי:\n💅 ${a.serviceName}\n📅 ${dateLabel}\n🕐 ${a.time}\nתודה!`);
+          const changeMsg = encodeURIComponent(`היי אופק! 💅\nאני רוצה לשנות את התור שלי:\n💅 ${a.serviceName}\n📅 ${dateLabel}\n🕐 ${a.time}\nאפשר לתאם זמן אחר?`);
           return `
             <div class="cl-appt-card">
               <div class="cl-appt-status" style="color:${statusColor}">${statusEmoji} ${statusText}</div>
@@ -253,7 +253,7 @@
                 <a href="https://wa.me/${waPhone}?text=${cancelMsg}" target="_blank" class="cl-appt-btn cancel">✕ ביטול</a>
               </div>
               <div style="margin-top:8px;text-align:center;font-size:12px;color:#999">
-                ביטלת בטעות? <a href="https://wa.me/${waPhone}?text=${encodeURIComponent(`היי עופק! 💅\nביטלתי בטעות את התור:\n💅 ${a.serviceName}\n📅 ${dateLabel}\n🕐 ${a.time}\nאשמח להחזיר אותו!`)}" target="_blank" style="color:#e8a4b8;text-decoration:underline">↩️ החזרת תור</a>
+                ביטלת בטעות? <a href="https://wa.me/${waPhone}?text=${encodeURIComponent(`היי אופק! 💅\nביטלתי בטעות את התור:\n💅 ${a.serviceName}\n📅 ${dateLabel}\n🕐 ${a.time}\nאשמח להחזיר אותו!`)}" target="_blank" style="color:#e8a4b8;text-decoration:underline">↩️ החזרת תור</a>
               </div>
             </div>`;
         }).join('');

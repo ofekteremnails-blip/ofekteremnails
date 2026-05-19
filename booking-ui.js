@@ -1,4 +1,4 @@
-// ── STATE ──
+﻿// ── STATE ──
 let selected = { services: [], date: null, time: null };
 let calYear, calMonth;
 let currentClient = null; // לקוחה מחוברת

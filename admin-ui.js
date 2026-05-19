@@ -1,4 +1,4 @@
-// ── WEBAUTHN BIOMETRIC ──
+﻿// ── WEBAUTHN BIOMETRIC ──
 const BIOMETRIC_KEY = 'biometricCredentialId';
 
 async function initBiometric() {
