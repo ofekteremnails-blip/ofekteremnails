@@ -1,5 +1,5 @@
 ﻿// ── GOOGLE SHEETS + CALENDAR SYNC ──
-const WEBAPP_URL = 'PASTE_YOUR_WEBAPP_URL_HERE';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxWE5GsJqR05MTabvUrtmb1_siLD-pmLwpXHiG3T7AAUkwr07xpOhBbqCZeV4fqx7E/exec';
 
 async function loadAllData() {
   return new Promise((resolve) => {
