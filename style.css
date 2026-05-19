@@ -72,7 +72,7 @@ body {
   box-shadow: 0 1px 20px rgba(160,112,128,0.06);
 }
 .logo {
-  height: 280px;
+  height: 65px;
   object-fit: contain;
   filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
 }
@@ -971,7 +971,7 @@ footer p { font-size: 12px; margin-bottom: 6px; letter-spacing: 0.3px; }
   .navbar.scrolled { padding: 12px 24px; }
   .navbar ul { display: none; }
   .hamburger { display: block; }
-  .logo { height: 48px; }
+  .logo { height: 120px; }
   .hero { min-height: 580px; }
   .hero-title { font-size: clamp(38px, 10vw, 64px); }
   .hero-desc { font-size: 15px; }
