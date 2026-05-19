@@ -1,4 +1,4 @@
-const CACHE = 'lr-nails-v4';
+﻿const CACHE = 'lr-nails-v4';
 const ASSETS = ['/', '/booking.html', '/admin.html', '/booking.js', '/booking-ui.js', '/admin-ui.js', '/booking.css', '/style.css'];
 
 self.addEventListener('install', e => {
@@ -20,7 +20,7 @@ self.addEventListener('fetch', e => {
 });
 
 self.addEventListener('push', e => {
-  const data = e.data?.json() ?? { title: '💅 Lian Rebekah Nails', body: 'תזכורת לתור שלך!' };
+  const data = e.data?.json() ?? { title: '💅 Ofek Terem Nails', body: 'תזכורת לתור שלך!' };
   e.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
@@ -36,3 +36,4 @@ self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(clients.openWindow(e.notification.data?.url ?? '/'));
 });
+

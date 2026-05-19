@@ -145,8 +145,8 @@ function loadMyAppointments(phone) {
       const statusEmoji = a.status === 'confirmed' ? '✅' : '⏳';
       const statusText  = a.status === 'confirmed' ? 'מאושר' : 'ממתין לאישור';
       const statusColor = a.status === 'confirmed' ? '#25D366' : '#f0a500';
-      const cancelMsg = encodeURIComponent(`היי ליאן! 💅\nאני רוצה לבטל את התור שלי:\n💅 ${a.serviceName}\n📅 ${formatDate(a.date)}\n🕐 ${a.time}\nתודה!`);
-      const changeMsg = encodeURIComponent(`היי ליאן! 💅\nאני רוצה לשנות את התור שלי:\n💅 ${a.serviceName}\n📅 ${formatDate(a.date)}\n🕐 ${a.time}\nאפשר לתאם זמן אחר?`);
+      const cancelMsg = encodeURIComponent(`היי אופק! 💅\nאני רוצה לבטל את התור שלי:\n💅 ${a.serviceName}\n📅 ${formatDate(a.date)}\n🕐 ${a.time}\nתודה!`);
+      const changeMsg = encodeURIComponent(`היי אופק! 💅\nאני רוצה לשנות את התור שלי:\n💅 ${a.serviceName}\n📅 ${formatDate(a.date)}\n🕐 ${a.time}\nאפשר לתאם זמן אחר?`);
       return `
         <div class="my-appt-item">
           <div class="my-appt-status" style="color:${statusColor}">${statusEmoji} ${statusText}</div>
@@ -470,8 +470,9 @@ function showConfirmation(appt) {
   `;
 
   const settings = getSettings();
-  const msg = `היי ליאן! 💅\nקבעתי תור:\n✨ ${appt.serviceName}\n📅 ${formatDate(appt.date)}\n🕐 ${appt.time}\n👤 ${appt.clientName}\n📞 ${appt.clientPhone}${appt.notes ? '\n📝 ' + appt.notes : ''}`;
+  const msg = `היי אופק! 💅\nקבעתי תור:\n✨ ${appt.serviceName}\n📅 ${formatDate(appt.date)}\n🕐 ${appt.time}\n👤 ${appt.clientName}\n📞 ${appt.clientPhone}${appt.notes ? '\n📝 ' + appt.notes : ''}`;
   document.getElementById('confirmWA').href = `https://wa.me/${settings.waPhone}?text=${encodeURIComponent(msg)}`;
 
   // show whatsapp button - don't auto-open (blocked on mobile)
 }
+

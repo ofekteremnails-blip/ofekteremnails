@@ -339,7 +339,7 @@ function renderReminders(tomorrowAppts) {
 
 מחכה לראותך! ❤️
 
-ליאן`;
+אופק`;
     
     let clientPhone = appt.clientPhone.replace(/\D/g, '');
     if (clientPhone.startsWith('0')) clientPhone = '972' + clientPhone.slice(1);
@@ -415,7 +415,7 @@ function renderMaintenanceReminders(allAppts) {
 
 מחכה לראות אותך! ❤️
 
-ליאן`;
+אופק`;
     
     let clientPhone = appt.clientPhone.replace(/\D/g, '');
     if (clientPhone.startsWith('0')) clientPhone = '972' + clientPhone.slice(1);
@@ -917,7 +917,7 @@ function notifyWaitlist(waitlistId, date) {
 
 מחכה לשמוע ממך! ❤️
 
-ליאן`;
+אופק`;
     
     let phone = item.phone.replace(/\D/g, '');
     if (phone.startsWith('0')) phone = '972' + phone.slice(1);
@@ -1455,3 +1455,4 @@ function saveServicesHandler() {
   saveServices(services);
   showToast('✅ שירותים נשמרו בהצלחה!');
 }
+
