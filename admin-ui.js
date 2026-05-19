@@ -1365,7 +1365,7 @@ function _displayClients(clients) {
     const normPhone = (p) => String(p || '').replace(/\D/g, '');
     const clientAppts = appts.filter(a => normPhone(a.clientPhone) === normPhone(c.phone) && a.status !== 'cancelled');
     const lastAppt = clientAppts.sort((a,b) => b.date.localeCompare(a.date))[0];
-    let displayPhone = c.phone;
+    let displayPhone = String(c.phone || '');
     if (displayPhone && !displayPhone.startsWith('0') && !displayPhone.startsWith('+')) displayPhone = '0' + displayPhone;
     return `
       <div class="client-card">
