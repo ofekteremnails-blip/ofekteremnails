@@ -233,7 +233,7 @@ function getAvailableSlots(dateStr, durationMins) {
     const slotEnd = t + durationMins;
     const conflict = appointments.some(a => {
       const aStart = toMinutes(a.time);
-      const aEnd = aStart + a.duration;
+      const aEnd = aStart + (Number(a.duration) || 60) + 120; // מרווח שעתיים אחרי כל טיפול
       return t < aEnd && slotEnd > aStart;
     });
     if (!conflict) slots.push(fromMinutes(t));
@@ -249,7 +249,7 @@ function getAvailableSlots(dateStr, durationMins) {
       const slotEnd = t + durationMins;
       const conflict = appointments.some(a => {
         const aStart = toMinutes(a.time);
-        const aEnd = aStart + a.duration;
+        const aEnd = aStart + (Number(a.duration) || 60) + 120; // מרווח שעתיים
         return t < aEnd && slotEnd > aStart;
       });
       if (!conflict) slots.push(timeStr);

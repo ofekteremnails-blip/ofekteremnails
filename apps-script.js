@@ -332,18 +332,66 @@ function lookupClient(phone) {
 function updateStatus(id, status) {
   const sheet = getSheet();
   if (sheet.getLastRow() <= 1) return;
-  const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat();
-  for (let i = 0; i < ids.length; i++) {
-    if (String(ids[i]) === String(id)) { sheet.getRange(i + 2, 8).setValue(status); return; }
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).getValues();
+  for (let i = 0; i < rows.length; i++) {
+    if (String(rows[i][0]) === String(id)) {
+      sheet.getRange(i + 2, 8).setValue(status);
+      // מחק מהיומן אם בוטל
+      if (status === 'cancelled') {
+        try {
+          const date = String(rows[i][2]);
+          const time = String(rows[i][3]);
+          const clientName = String(rows[i][4]);
+          const serviceName = String(rows[i][1]);
+          deleteCalendarEvent(date, time, clientName, serviceName);
+        } catch(e) { console.warn('Calendar delete error:', e); }
+      }
+      return;
+    }
   }
 }
 
 function deleteRow(id) {
   const sheet = getSheet();
   if (sheet.getLastRow() <= 1) return;
-  const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat();
-  for (let i = 0; i < ids.length; i++) {
-    if (String(ids[i]) === String(id)) { sheet.deleteRow(i + 2); return; }
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).getValues();
+  for (let i = 0; i < rows.length; i++) {
+    if (String(rows[i][0]) === String(id)) {
+      // מחק מהיומן
+      try {
+        const date = String(rows[i][2]);
+        const time = String(rows[i][3]);
+        const clientName = String(rows[i][4]);
+        const serviceName = String(rows[i][1]);
+        deleteCalendarEvent(date, time, clientName, serviceName);
+      } catch(e) { console.warn('Calendar delete error:', e); }
+      sheet.deleteRow(i + 2);
+      return;
+    }
+  }
+}
+
+function deleteCalendarEvent(date, time, clientName, serviceName) {
+  const cal = getOrCreateCalendar();
+  // תאריך ושעה
+  let dateStr = date;
+  if (dateStr instanceof Date || dateStr.includes('T')) {
+    const d = new Date(dateStr);
+    dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  let timeStr = time;
+  if (timeStr.includes('T') || timeStr.includes('1899')) {
+    const d = new Date(timeStr);
+    timeStr = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const [h, min] = timeStr.split(':').map(Number);
+  const start = new Date(y, m-1, d, h, min);
+  const end = new Date(y, m-1, d, h+3, min); // חלון חיפוש של 3 שעות
+  const events = cal.getEvents(start, end);
+  const title = '💅 ' + serviceName + ' - ' + clientName;
+  for (let ev of events) {
+    if (ev.getTitle() === title) { ev.deleteEvent(); break; }
   }
 }
 
