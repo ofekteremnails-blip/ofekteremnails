@@ -544,7 +544,6 @@ function updateStatus(id, status) {
   saveAppointments(appts);
   updateStatusInSheets(id, status);
   refreshCurrentPanel();
-  if (status === 'confirmed') sendConfirmationWA(appt);
 }
 
 function sendConfirmationWA(appt) {
