@@ -1,5 +1,5 @@
 const SHEET_ID = '1lHE5n4vMMlL2W7vioDjI60WuH-MAA_QPW62mbYb-I_8';
-const CAL_NAME = 'עופק תרם ניילס 💅';
+const CAL_NAME = 'אופק תרם ניילס 💅';
 
 function getSheet() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
