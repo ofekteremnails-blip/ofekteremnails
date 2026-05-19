@@ -1378,7 +1378,7 @@ function _displayClients(clients) {
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button onclick="viewClientGallery('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn" style="background:#e8f0ff;color:#1a5a9e;font-size:12px;padding:8px 12px">🖼️</button>
           <button onclick="editClient('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn" style="background:#e8f8ef;color:#1a9e4a;font-size:12px;padding:8px 12px">✏️</button>
-          <a href="https://wa.me/${c.phone.replace(/\D/g,'')}" target="_blank" class="act-btn wa" style="font-size:12px;padding:8px 12px">💬</a>
+          <a href="https://wa.me/${String(c.phone||'').replace(/\D/g,'')}" target="_blank" class="act-btn wa" style="font-size:12px;padding:8px 12px">💬</a>
           <button onclick="deleteClient('${sanitize(c.phone)}')" class="act-btn del" style="font-size:12px;padding:8px 12px">🗑</button>
         </div>
       </div>`;
