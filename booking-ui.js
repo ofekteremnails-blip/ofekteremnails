@@ -352,24 +352,33 @@ function renderSlots() {
   const label = document.getElementById('selectedDateLabel');
   const grid = document.getElementById('slotsGrid');
   const noSlots = document.getElementById('noSlots');
+  const waitlistOffer = document.getElementById('waitlistOffer');
   label.textContent = formatDate(selected.date);
 
   const totalDuration = selected.services.reduce((sum, s) => sum + s.duration, 0);
   const slots = getAvailableSlots(selected.date, totalDuration);
+
   if (slots.length === 0) {
     grid.innerHTML = '';
     noSlots.classList.remove('hidden');
-    const waitlistOffer = document.getElementById('waitlistOffer');
-    if (waitlistOffer) waitlistOffer.classList.remove('hidden');
+    if (waitlistOffer) {
+      waitlistOffer.classList.remove('hidden');
+      // אפס את ה-offer אם כבר נרשמו קודם
+      if (!waitlistOffer.querySelector('.btn-waitlist') && !waitlistOffer.querySelector('[style*="e8f8ef"]')) {
+        waitlistOffer.innerHTML = `
+          <p style="color:#888;font-size:14px;margin-bottom:12px">או הירשמי לרשימת המתנה ליום זה ונודיע לך אם יתפנה מקום</p>
+          <button class="btn-waitlist" onclick="joinWaitlist()">🔔 הירשמי לרשימת המתנה</button>`;
+      }
+    }
     document.getElementById('toStep4').disabled = true;
     return;
   }
+
   noSlots.classList.add('hidden');
-  const waitlistOffer = document.getElementById('waitlistOffer');
-  if (waitlistOffer) waitlistOffer.classList.add('hidden');
-  grid.innerHTML = slots.map(t => `
-    <button class="slot-btn" onclick="selectSlot('${t}', this)">${t}</button>
-  `).join('');
+  if (waitlistOffer) { waitlistOffer.classList.add('hidden'); waitlistOffer.innerHTML = ''; }
+  grid.innerHTML = slots.map(t =>
+    `<button class="slot-btn" onclick="selectSlot('${t}', this)">${t}</button>`
+  ).join('');
 }
 
 function selectSlot(time, el) {
@@ -381,26 +390,64 @@ function selectSlot(time, el) {
 
 // ── WAITLIST ──
 function joinWaitlist() {
+  const offer = document.getElementById('waitlistOffer');
+
+  // אם אין לקוחה מחוברת - הצג טופס inline
   if (!currentClient || !currentClient.phone) {
-    const name  = prompt('שמך:');
-    const phone = prompt('טלפון:');
-    if (!name || !phone) return;
-    currentClient = { name, phone };
+    offer.innerHTML = `
+      <div class="waitlist-form">
+        <input id="wlName" type="text" placeholder="שם מלא *" style="width:100%;padding:10px;border:1.5px solid #e0c8d0;border-radius:10px;font-family:inherit;font-size:14px;margin-bottom:8px"/>
+        <input id="wlPhone" type="tel" placeholder="טלפון *" inputmode="numeric" style="width:100%;padding:10px;border:1.5px solid #e0c8d0;border-radius:10px;font-family:inherit;font-size:14px;margin-bottom:12px"/>
+        <button onclick="submitWaitlist()" class="btn-waitlist" style="width:100%">✅ הירשמי לרשימת המתנה</button>
+        <p id="wlError" style="color:#e05;font-size:13px;margin-top:6px"></p>
+      </div>`;
+    return;
   }
+  submitWaitlist();
+}
+
+function submitWaitlist() {
+  const offer = document.getElementById('waitlistOffer');
+  let name  = currentClient?.name;
+  let phone = currentClient?.phone;
+
+  if (!name || !phone) {
+    name  = document.getElementById('wlName')?.value.trim();
+    phone = document.getElementById('wlPhone')?.value.trim();
+    if (!name) { document.getElementById('wlError').textContent = 'אנא הכניסי שם'; return; }
+    if (!phone || !/^[0-9+\-\s]{9,15}$/.test(phone)) { document.getElementById('wlError').textContent = 'טלפון לא תקין'; return; }
+    currentClient = { name, phone };
+    localStorage.setItem('clientSession', JSON.stringify(currentClient));
+  }
+
+  const totalDuration = selected.services.reduce((sum, s) => sum + s.duration, 0);
   const servicesNames = selected.services.map(s => s.name).join(', ');
+
   const cb = 'wl' + Date.now();
   const url = WEBAPP_URL + '?action=addWaitlist&callback=' + cb
-    + '&date='    + selected.date
-    + '&name='    + encodeURIComponent(currentClient.name)
-    + '&phone='   + encodeURIComponent(currentClient.phone)
-    + '&service=' + encodeURIComponent(servicesNames);
-  window[cb] = (res) => {
+    + '&date='     + encodeURIComponent(selected.date)
+    + '&name='     + encodeURIComponent(name)
+    + '&phone='    + encodeURIComponent(phone)
+    + '&service='  + encodeURIComponent(servicesNames)
+    + '&duration=' + totalDuration
+    + '&status=waiting'
+    + '&createdAt='+ encodeURIComponent(new Date().toISOString());
+
+  window[cb] = () => {
     delete window[cb]; document.getElementById(cb)?.remove();
-    document.getElementById('waitlistOffer').innerHTML =
-      '<p style="color:#25D366;font-weight:600">✅ נרשמת בהצלחה! נודיע לך אם יתפנה מקום 💅</p>';
+    offer.innerHTML = `
+      <div style="background:#e8f8ef;border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">✅</div>
+        <p style="color:#1a6e3a;font-weight:700;font-size:15px">נרשמת לרשימת המתנה!</p>
+        <p style="color:#555;font-size:13px;margin-top:4px">נשלח לך הודעת WhatsApp אם יתפנה מקום ביום זה 💅</p>
+      </div>`;
   };
   const s = document.createElement('script');
   s.id = cb; s.src = url;
+  s.onerror = () => {
+    delete window[cb];
+    offer.innerHTML = '<p style="color:#e05;font-size:13px">שגיאה בהרשמה, נסי שוב</p>';
+  };
   document.body.appendChild(s);
 }
 

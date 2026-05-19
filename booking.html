@@ -136,12 +136,8 @@
         <h2>בחרי שעה</h2>
         <p class="step-sub" id="selectedDateLabel"></p>
         <div class="slots-grid" id="slotsGrid"></div>
-        <p class="no-slots hidden" id="noSlots">אין שעות פנויות ביום זה 😔<br/>אנא בחרי תאריך אחר
-          <div class="waitlist-offer hidden" id="waitlistOffer">
-            <p>או הירשמי לרשימת המתנה ליום זה ונודיע לך אם יתפנה מקום</p>
-            <button class="btn-waitlist" onclick="joinWaitlist()">+ הירשמי לרשימת המתנה</button>
-          </div>
-        </p>
+        <p class="no-slots hidden" id="noSlots">אין שעות פנויות ביום זה 😔<br/>אנא בחרי תאריך אחר</p>
+        <div class="waitlist-offer hidden" id="waitlistOffer"></div>
         <div class="step-nav">
           <button class="btn-back" id="toStep2Back">→ חזרה</button>
           <button class="btn-next" id="toStep4" disabled>המשך ←</button>
@@ -212,8 +208,8 @@
     <p>© 2025 אופק תרם ניילס · כל הזכויות שמורות</p>
   </footer>
 
-  <script src="booking.js?v=19"></script>
-  <script src="booking-ui.js?v=19"></script>
+  <script src="booking.js?v=20"></script>
+  <script src="booking-ui.js?v=20"></script>
   <script src="chatbot-widget.js"></script>
   <script>
     (function() {

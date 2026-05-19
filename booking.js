@@ -214,45 +214,56 @@ function fromMinutes(mins) {
   return `${h}:${m}`;
 }
 
+// בונה רשימת טווחים פנויים מתוך טווחי עבודה אחרי הורדת תורים קיימים
+function getFreeIntervals(workIntervals, appointments) {
+  // appointments: [{ start: minutes, end: minutes }]
+  // workIntervals: [{ start: minutes, end: minutes }]
+  let free = workIntervals.map(w => ({ ...w }));
+  appointments.forEach(appt => {
+    const next = [];
+    free.forEach(interval => {
+      if (appt.end <= interval.start || appt.start >= interval.end) {
+        next.push(interval);
+      } else {
+        if (appt.start > interval.start) next.push({ start: interval.start, end: appt.start });
+        if (appt.end < interval.end)   next.push({ start: appt.end,   end: interval.end });
+      }
+    });
+    free = next;
+  });
+  return free;
+}
+
 function getAvailableSlots(dateStr, durationMins) {
   const settings = getSettings();
-  const date = new Date(dateStr);
-  const dow = date.getDay();
+  const dow = new Date(dateStr).getDay();
   const day = settings.workDays[dow];
   if (!day || !day.active) return [];
   if (settings.blockedDates.includes(dateStr)) return [];
 
-  const interval = settings.slotInterval;
-  const appointments = getAppointments().filter(a => a.date === dateStr && a.status !== 'cancelled');
-  const slots = [];
+  const interval = settings.slotInterval || 15;
 
-  const regularStart = toMinutes(day.start);
-  const regularEnd = toMinutes(day.end);
+  // בנה טווחי עבודה: שעות רגילות + שעות מיוחדות
+  const workIntervals = [{ start: toMinutes(day.start), end: toMinutes(day.end) }];
+  (settings.customHours || []).filter(c => c.date === dateStr).forEach(c => {
+    workIntervals.push({ start: toMinutes(c.start), end: toMinutes(c.end) });
+  });
 
-  for (let t = regularStart; t + durationMins <= regularEnd; t += interval) {
-    const slotEnd = t + durationMins;
-    const conflict = appointments.some(a => {
-      const aStart = toMinutes(a.time);
-      const aEnd = aStart + (Number(a.duration) || 60) + 120; // מרווח שעתיים אחרי כל טיפול
-      return t < aEnd && slotEnd > aStart;
+  // תורים קיימים כטווחים תפוסים
+  const bookedIntervals = getAppointments()
+    .filter(a => a.date === dateStr && a.status !== 'cancelled')
+    .map(a => {
+      const s = toMinutes(a.time);
+      return { start: s, end: s + (Number(a.duration) || 60) };
     });
-    if (!conflict) slots.push(fromMinutes(t));
-  }
 
-  const customHours = (settings.customHours || []).filter(c => c.date === dateStr);
-  customHours.forEach(custom => {
-    const customStart = toMinutes(custom.start);
-    const customEnd = toMinutes(custom.end);
-    for (let t = customStart; t + durationMins <= customEnd; t += interval) {
-      const timeStr = fromMinutes(t);
-      if (slots.includes(timeStr)) continue;
-      const slotEnd = t + durationMins;
-      const conflict = appointments.some(a => {
-        const aStart = toMinutes(a.time);
-        const aEnd = aStart + (Number(a.duration) || 60) + 120; // מרווח שעתיים
-        return t < aEnd && slotEnd > aStart;
-      });
-      if (!conflict) slots.push(timeStr);
+  const freeIntervals = getFreeIntervals(workIntervals, bookedIntervals);
+
+  // מצא כל נקודת התחלה שבה durationMins נכנס בתוך טווח פנוי
+  const slots = [];
+  freeIntervals.forEach(({ start, end }) => {
+    for (let t = start; t + durationMins <= end; t += interval) {
+      slots.push(fromMinutes(t));
     }
   });
 

@@ -718,3 +718,40 @@
   .my-appt-actions { flex-direction: column; }
   .my-appt-btn { width: 100%; padding: 11px; }
 }
+
+/* ── WAITLIST ── */
+.waitlist-offer {
+  margin-top: 16px;
+  padding: 16px;
+  background: #fff8e6;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  text-align: center;
+}
+.btn-waitlist {
+  background: var(--deep);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+.btn-waitlist:hover { background: var(--mauve); }
+.waitlist-form input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #e0c8d0;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  margin-bottom: 8px;
+  outline: none;
+  direction: rtl;
+  box-sizing: border-box;
+}
+.waitlist-form input:focus { border-color: var(--mauve); }
