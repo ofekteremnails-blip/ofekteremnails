@@ -620,6 +620,11 @@ function renderSettings() {
   document.getElementById('slotInterval').value = settings.slotInterval;
   document.getElementById('waPhoneInput').value = settings.waPhone;
 
+  // הפסקת צהריים
+  if (settings.lunchBreak) {
+    document.getElementById('lunchBreakStart').value = settings.lunchBreak.start || '';
+    document.getElementById('lunchBreakEnd').value   = settings.lunchBreak.end   || '';
+  }
   const container = document.getElementById('workDaysEditor');
   container.innerHTML = Object.entries(settings.workDays).map(([dow, day]) => `
     <div class="work-day-row">
@@ -1333,6 +1338,12 @@ function saveSettingsHandler() {
   settings.waPhone = document.getElementById('waPhoneInput').value.trim();
   const newPass = document.getElementById('newPassInput').value.trim();
   if (newPass) settings.adminPass = newPass;
+
+  // הפסקת צהריים
+  const lunchStart = document.getElementById('lunchBreakStart')?.value;
+  const lunchEnd   = document.getElementById('lunchBreakEnd')?.value;
+  if (lunchStart && lunchEnd) settings.lunchBreak = { start: lunchStart, end: lunchEnd };
+  else delete settings.lunchBreak;
 
   document.querySelectorAll('.wd-active').forEach(cb => {
     const dow = cb.dataset.dow;
