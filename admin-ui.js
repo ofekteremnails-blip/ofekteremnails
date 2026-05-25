@@ -619,6 +619,9 @@ function renderSettings() {
   const settings = getSettings();
   document.getElementById('slotInterval').value = settings.slotInterval;
   document.getElementById('waPhoneInput').value = settings.waPhone;
+  const lb = settings.lunchBreak || {};
+  document.getElementById('lunchBreakStart').value = lb.start || '';
+  document.getElementById('lunchBreakEnd').value   = lb.end   || '';
 
   // הפסקת צהריים
   if (settings.lunchBreak) {
@@ -1336,6 +1339,9 @@ function saveSettingsHandler() {
   const settings = getSettings();
   settings.slotInterval = +document.getElementById('slotInterval').value;
   settings.waPhone = document.getElementById('waPhoneInput').value.trim();
+  const lbStart = document.getElementById('lunchBreakStart').value;
+  const lbEnd   = document.getElementById('lunchBreakEnd').value;
+  settings.lunchBreak = (lbStart && lbEnd) ? { start: lbStart, end: lbEnd } : null;
   const newPass = document.getElementById('newPassInput').value.trim();
   if (newPass) settings.adminPass = newPass;
 
