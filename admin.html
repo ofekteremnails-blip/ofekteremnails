@@ -354,18 +354,6 @@
         <div class="settings-card">
           <h3 class="settings-card-title">כלליות</h3>
           <div class="form-field">
-            <label>מרווח בין תורים</label>
-            <select id="slotInterval" class="field-input">
-              <option value="15">15 דקות</option>
-              <option value="30">30 דקות</option>
-              <option value="45">45 דקות</option>
-              <option value="60">60 דקות</option>
-              <option value="75">75 דקות</option>
-              <option value="90">90 דקות</option>
-              <option value="120">120 דקות</option>
-            </select>
-          </div>
-          <div class="form-field">
             <label>☕ הפסקת צהריים (אופציונלי)</label>
             <div style="display:flex;gap:10px;align-items:center">
               <input type="time" id="lunchBreakStart" class="field-input" style="flex:1"/>
@@ -407,13 +395,12 @@
 
         <div class="settings-card">
           <h3 class="settings-card-title">שעות מיוחדות לתאריך ספציפי</h3>
-          <p style="font-size:13px;color:#aaa;margin-bottom:14px">פתחי שעה ספציפית לשירות מסוים — המערכת תחשב אוטומטית את זמן הסיום</p>
+          <p style="font-size:13px;color:#aaa;margin-bottom:14px">פתחי טווח שעות לתאריך ספציפי — לקוחות יוכלו לקבוע תורים רגילים בתוך הטווח</p>
           <div class="custom-hours-add-row">
             <input type="date" id="customHourDate" class="field-input"/>
             <input type="time" id="customHourStart" class="field-input" value="19:00"/>
-            <select id="customHourService" class="field-input">
-              <option value="">בחרי שירות...</option>
-            </select>
+            <span style="color:#aaa;align-self:center">עד</span>
+            <input type="time" id="customHourEnd" class="field-input" value="22:00"/>
             <button class="btn-primary" id="addCustomHour">+ הוסף</button>
           </div>
           <div id="customHoursList" class="blocked-list" style="margin-top:12px"></div>

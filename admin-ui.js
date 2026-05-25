@@ -617,7 +617,6 @@ const DAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי',
 
 function renderSettings() {
   const settings = getSettings();
-  document.getElementById('slotInterval').value = settings.slotInterval;
   document.getElementById('waPhoneInput').value = settings.waPhone;
   const lb = settings.lunchBreak || {};
   document.getElementById('lunchBreakStart').value = lb.start || '';
@@ -653,7 +652,6 @@ function renderSettings() {
   renderBlockedDates();
   renderCustomHours();
   renderVacations();
-  populateServiceDropdown();
 
   document.getElementById('addBlockDate').onclick = () => {
     const val = document.getElementById('blockDateInput').value;
@@ -667,45 +665,26 @@ function renderSettings() {
   document.getElementById('addCustomHour').onclick = () => {
     const date = document.getElementById('customHourDate').value;
     const start = document.getElementById('customHourStart').value;
-    const serviceId = document.getElementById('customHourService').value;
+    const end = document.getElementById('customHourEnd').value;
     
-    if (!date || !start || !serviceId) {
+    if (!date || !start || !end) {
       showToast('אנא מלאי את כל השדות', '#e05');
       return;
     }
-    
-    const services = getServices();
-    const service = services.find(s => s.id === serviceId);
-    if (!service) {
-      showToast('שירות לא נמצא', '#e05');
+    if (start >= end) {
+      showToast('שעת הסיום חייבת להיות אחרי שעת ההתחלה', '#e05');
       return;
     }
     
-    // חשב שעת סיום אוטומטית
-    const startMins = toMinutes(start);
-    const endMins = startMins + service.duration;
-    const end = fromMinutes(endMins);
-    
     const s = getSettings();
     if (!s.customHours) s.customHours = [];
-    
-    // הוסף שעה מיוחדת
-    s.customHours.push({ 
-      date, 
-      start, 
-      end,
-      serviceId: service.id,
-      serviceName: service.name,
-      serviceIcon: service.icon,
-      duration: service.duration
-    });
-    
+    s.customHours.push({ date, start, end });
     saveSettings(s);
     document.getElementById('customHourDate').value = '';
     document.getElementById('customHourStart').value = '19:00';
-    document.getElementById('customHourService').value = '';
+    document.getElementById('customHourEnd').value = '22:00';
     renderCustomHours();
-    showToast(`✅ שעה מיוחדת נשמרה! ${start}-${end}`);
+    showToast(`✅ שעות מיוחדות נשמרו! ${start}–${end}`);
   };
 }
 
@@ -740,7 +719,6 @@ function renderCustomHours() {
           <span>
             ${formatDate(c.date)} &nbsp;
             <strong style="color:#25D366">${c.start}–${c.end}</strong>
-            <span style="margin-right:8px;font-size:13px">${c.serviceIcon || '💅'} ${c.serviceName || 'שירות'}</span>
           </span>
           <button onclick="removeCustomHour(${idx})" style="color:#1a6e3a">✕</button>
         </div>`).join('')
@@ -1337,7 +1315,6 @@ function removeBlockDate(dateStr) {
 
 function saveSettingsHandler() {
   const settings = getSettings();
-  settings.slotInterval = +document.getElementById('slotInterval').value;
   settings.waPhone = document.getElementById('waPhoneInput').value.trim();
   const lbStart = document.getElementById('lunchBreakStart').value;
   const lbEnd   = document.getElementById('lunchBreakEnd').value;
