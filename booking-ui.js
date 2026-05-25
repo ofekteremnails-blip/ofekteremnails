@@ -16,6 +16,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (saved) {
     try {
       currentClient = JSON.parse(saved);
+      // אם יש session אבל אין שם - נסה לטעון מ-Sheets
+      if (currentClient && !currentClient.name && currentClient.phone) {
+        loadSettingsFromSheets().then(() => renderServices());
+        lookupAndRefreshClient(currentClient.phone);
+        return;
+      }
       renderServices();
       showClientGreeting(currentClient);
       showStep(1);
@@ -31,6 +37,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── CLIENT LOGIN ──
+function lookupAndRefreshClient(phone) {
+  const cb = 'lrc' + Date.now();
+  const url = WEBAPP_URL + '?action=lookupClient&callback=' + cb + '&phone=' + encodeURIComponent(phone);
+  window[cb] = (data) => {
+    delete window[cb]; document.getElementById(cb)?.remove();
+    currentClient = { name: data && data.name ? data.name : null, phone };
+    localStorage.setItem('clientSession', JSON.stringify(currentClient));
+    showClientGreeting(currentClient);
+    showStep(1);
+    prefillClientDetails();
+  };
+  const s = document.createElement('script');
+  s.id = cb; s.src = url;
+  s.onerror = () => { delete window[cb]; showStep(1); };
+  document.body.appendChild(s);
+}
+
 function initClientLogin() {
   const saved = localStorage.getItem('clientSession');
   if (saved) {
