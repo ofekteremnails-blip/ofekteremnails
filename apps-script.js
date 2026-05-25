@@ -287,16 +287,18 @@ function saveAppointment(data) {
   ]);
 
   try {
-    const cal = getOrCreateCalendar();
-    const [y, m, d] = data.date.split('-').map(Number);
-    const [h, min]  = data.time.split(':').map(Number);
-    const start = new Date(y, m - 1, d, h, min);
-    const end   = new Date(y, m - 1, d, h, min + (Number(data.duration) || 60));
-    cal.createEvent(
-      '💅 ' + data.serviceName + ' - ' + data.clientName,
-      start, end,
-      { description: '📞 ' + data.clientPhone + '\n📝 ' + (data.notes || '-') }
-    );
+    if (data.status === 'confirmed') {
+      const cal = getOrCreateCalendar();
+      const [y, m, d] = data.date.split('-').map(Number);
+      const [h, min]  = data.time.split(':').map(Number);
+      const start = new Date(y, m - 1, d, h, min);
+      const end   = new Date(y, m - 1, d, h, min + (Number(data.duration) || 60));
+      cal.createEvent(
+        '💅 ' + data.serviceName + ' - ' + data.clientName,
+        start, end,
+        { description: '📞 ' + data.clientPhone + '\n📝 ' + (data.notes || '-') }
+      );
+    }
   } catch(calErr) {
     console.warn('Calendar error:', calErr);
   }
@@ -421,15 +423,35 @@ function updateStatus(id, status) {
   for (let i = 0; i < rows.length; i++) {
     if (String(rows[i][0]) === String(id)) {
       sheet.getRange(i + 2, 8).setValue(status);
-      // מחק מהיומן אם בוטל
-      if (status === 'cancelled') {
+      const date        = String(rows[i][2]);
+      const time        = String(rows[i][3]);
+      const clientName  = String(rows[i][4]);
+      const serviceName = String(rows[i][1]);
+      const clientPhone = String(rows[i][5]);
+      const duration    = Number(rows[i][8]) || 60;
+      if (status === 'confirmed') {
         try {
-          const date = String(rows[i][2]);
-          const time = String(rows[i][3]);
-          const clientName = String(rows[i][4]);
-          const serviceName = String(rows[i][1]);
-          deleteCalendarEvent(date, time, clientName, serviceName);
-        } catch(e) { console.warn('Calendar delete error:', e); }
+          const cal = getOrCreateCalendar();
+          let dateStr = date;
+          if (dateStr instanceof Date || dateStr.includes('T')) {
+            const d = new Date(dateStr);
+            dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+          }
+          let timeStr = time;
+          if (timeStr.includes('T') || timeStr.includes('1899')) {
+            const d = new Date(timeStr);
+            timeStr = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+          }
+          const [y, m, d2] = dateStr.split('-').map(Number);
+          const [h, min]   = timeStr.split(':').map(Number);
+          const start = new Date(y, m-1, d2, h, min);
+          const end   = new Date(y, m-1, d2, h, min + duration);
+          cal.createEvent('💅 ' + serviceName + ' - ' + clientName, start, end,
+            { description: '📞 ' + clientPhone });
+        } catch(e) { console.warn('Calendar add error:', e); }
+      }
+      if (status === 'cancelled') {
+        try { deleteCalendarEvent(date, time, clientName, serviceName); } catch(e) { console.warn('Calendar delete error:', e); }
       }
       return;
     }
