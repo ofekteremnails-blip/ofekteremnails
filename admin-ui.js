@@ -323,6 +323,15 @@ function _renderDashboard() {
   document.getElementById('todayList').innerHTML    = todaySorted.length    ? todaySorted.map(a => apptCard(a)).join('')    : emptyMsg('אין תורים היום');
   document.getElementById('tomorrowList').innerHTML = tomorrowSorted.length ? tomorrowSorted.map(a => apptCard(a)).join('') : emptyMsg('אין תורים מחר');
 
+  // ממתינות לאישור
+  const pendingList = document.getElementById('pendingList');
+  const pendingSection = document.getElementById('pendingSection');
+  if (pendingList) {
+    const pendingSorted = [...pending].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    pendingList.innerHTML = pendingSorted.length ? pendingSorted.map(a => apptCard(a, true)).join('') : emptyMsg('אין תורים הממתינים לאישור 🎉');
+    if (pendingSection) pendingSection.style.display = pendingSorted.length ? '' : 'none';
+  }
+
   // תזכורות למחר - עם כפתורי WhatsApp
   renderReminders(tomorrowSorted);
   
