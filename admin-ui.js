@@ -279,6 +279,7 @@ function apptCard(appt, showDate = false) {
         ${appt.status !== 'completed' && appt.status !== 'cancelled' ? `<button onclick="updateStatus('${sanitize(appt.id)}','completed')" class="act-btn complete">✔ הושלם</button>` : ''}
         ${appt.status === 'cancelled' ? `<button onclick="updateStatus('${sanitize(appt.id)}','confirmed')" class="act-btn" style="background:#25D366;color:#fff">↩️ החזר תור</button>` : ''}
         ${appt.status !== 'cancelled' ? `<button onclick="updateStatus('${sanitize(appt.id)}','cancelled')" class="act-btn cancel">✕ בטל</button>` : ''}
+        ${appt.status !== 'cancelled' ? `<button onclick="sendCancelWA('${sanitize(appt.id)}')" class="act-btn wa" style="background:#ff9800">💬 וואטסאפ ביטול</button>` : ''}
         <button onclick="sendReminderWA('${sanitize(appt.id)}')" class="act-btn wa">💬 וואטסאפ</button>
         <button onclick="deleteAppt('${sanitize(appt.id)}')" class="act-btn del">🗑</button>
       </div>
@@ -825,6 +826,22 @@ function deleteFromSheets(id) {
   const s = document.createElement('script');
   s.id = cb; s.src = url;
   document.body.appendChild(s);
+}
+
+function sendCancelWA(id) {
+  const appt = getAppointments().find(a => a.id === id);
+  if (!appt) return;
+  const msg = `היי ${appt.clientName}! 💅
+
+לצערי, התור שלך בוטל:
+✨ ${appt.serviceName}
+📅 ${formatDate(appt.date)}
+🕐 ${appt.time}
+
+אשמח לקבוע לך מועד חדש! מתי יוצא לך? ❤️
+
+אופק`;
+  window.open(`https://wa.me/${toWAPhone(appt.clientPhone)}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 function sendReminderWA(id) {

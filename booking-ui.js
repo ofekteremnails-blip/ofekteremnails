@@ -570,6 +570,7 @@ function submitBooking(e) {
   const notes = document.getElementById('clientNotes').value.trim();
 
   if (!name) { showFormError('אנא הכניסי שם מלא'); return; }
+  if (name.trim().split(/\s+/).length < 2) { showFormError('אנא הכניסי שם פרטי ושם משפחה'); return; }
   if (!phone) { showFormError('אנא הכניסי מספר טלפון'); return; }
   if (!/^[0-9+\-\s]{9,15}$/.test(phone)) { showFormError('מספר טלפון לא תקין'); return; }
 
