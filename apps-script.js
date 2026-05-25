@@ -287,6 +287,22 @@ function saveAppointment(data) {
   ]);
 
   try {
+    MailApp.sendEmail({
+      to: 'ofekteremnails@gmail.com',
+      subject: '💅 תור חדש - ' + data.clientName,
+      body: 'תור חדש נקלט!\n\n'
+        + 'שם: ' + data.clientName + '\n'
+        + 'טלפון: ' + data.clientPhone + '\n'
+        + 'שירות: ' + data.serviceName + '\n'
+        + 'תאריך: ' + data.date + '\n'
+        + 'שעה: ' + data.time + '\n'
+        + (data.notes ? 'הערות: ' + data.notes + '\n' : '')
+    });
+  } catch(mailErr) {
+    console.warn('Mail error:', mailErr);
+  }
+
+  try {
     if (data.status === 'confirmed') {
       const cal = getOrCreateCalendar();
       const [y, m, d] = data.date.split('-').map(Number);
