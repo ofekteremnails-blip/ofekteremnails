@@ -352,14 +352,32 @@ function updateClient(oldPhone, newName, newPhone) {
 }
 
 function lookupClient(phone) {
-  const sheet = getClientsSheet();
-  if (sheet.getLastRow() <= 1) return { name: null };
   const normalizePhone = (p) => String(p).replace(/\D/g, '');
   const normalized = normalizePhone(phone);
-  const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
-  for (let row of data) {
-    if (normalizePhone(row[1]) === normalized) return { name: row[0] };
+
+  // חפש בטבלת לקוחות
+  const clientSheet = getClientsSheet();
+  if (clientSheet.getLastRow() > 1) {
+    const data = clientSheet.getRange(2, 1, clientSheet.getLastRow() - 1, 2).getValues();
+    for (let row of data) {
+      if (normalizePhone(row[1]) === normalized) return { name: row[0] };
+    }
   }
+
+  // fallback - חפש בטבלת תורים
+  const apptSheet = getSheet();
+  if (apptSheet.getLastRow() > 1) {
+    const rows = apptSheet.getRange(2, 1, apptSheet.getLastRow() - 1, 6).getValues();
+    for (let row of rows) {
+      if (normalizePhone(String(row[5])) === normalized) {
+        const name = String(row[4]);
+        // שמור בטבלת לקוחות לפעם הבאה
+        saveClient(name, phone);
+        return { name };
+      }
+    }
+  }
+
   return { name: null };
 }
 

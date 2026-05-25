@@ -563,11 +563,7 @@ function submitBooking(e) {
   saveAppointments(appointments);
   saveToSheets(appt);
 
-  const existingAppts = getAppointments().filter(a => {
-    const norm = p => String(p||'').replace(/\D/g,'');
-    return norm(a.clientPhone) === norm(phone) && a.id !== appt.id;
-  });
-  if (existingAppts.length === 0) saveClientToSheets(name, phone);
+  saveClientToSheets(name, phone);
   currentClient = { name, phone };
   localStorage.setItem('clientSession', JSON.stringify(currentClient));
   showClientGreeting(currentClient);
