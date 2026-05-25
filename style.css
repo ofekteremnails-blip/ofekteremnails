@@ -971,7 +971,7 @@ footer p { font-size: 12px; margin-bottom: 6px; letter-spacing: 0.3px; }
   .navbar.scrolled { padding: 12px 24px; }
   .navbar ul { display: none; }
   .hamburger { display: block; }
-  .logo { height: 80px; }
+  .logo { height: 65px; }
   .hero { min-height: 580px; }
   .hero-title { font-size: clamp(38px, 10vw, 64px); }
   .hero-desc { font-size: 15px; }
