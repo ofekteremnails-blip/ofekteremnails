@@ -354,7 +354,12 @@ function updateClient(oldPhone, newName, newPhone) {
 }
 
 function lookupClient(phone) {
-  const normalizePhone = (p) => String(p).replace(/\D/g, '');
+  const normalizePhone = (p) => {
+    let n = String(p).replace(/\D/g, '');
+    if (n.startsWith('972')) n = '0' + n.slice(3);
+    if (n.startsWith('0')) return n;
+    return '0' + n;
+  };
   const normalized = normalizePhone(phone);
 
   // חפש בטבלת לקוחות
