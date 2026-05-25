@@ -192,7 +192,7 @@
           }
           let p = String(r['טלפון'] || '');
           p = norm(p);
-          return { serviceName: String(r['שירות'] || ''), date, time, status: String(r['סטטוס'] || ''), phone: p };
+          return { id: String(r['ID'] || ''), serviceName: String(r['שירות'] || ''), date, time, status: String(r['סטטוס'] || ''), phone: p };
         }).filter(a => norm(a.phone) === norm(client.phone) && (a.status === 'pending' || a.status === 'confirmed'))
           .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 
@@ -213,16 +213,17 @@
           const cancelMsg = encodeURIComponent(`היי אופק! 💅\nאני רוצה לבטל את התור שלי:\n💅 ${a.serviceName}\n📅 ${dateLabel}\n🕐 ${a.time}\nתודה!`);
           const changeMsg = encodeURIComponent(`היי אופק! 💅\nאני רוצה לשנות את התור שלי:\n💅 ${a.serviceName}\n📅 ${dateLabel}\n🕐 ${a.time}\nאפשר לתאם זמן אחר?`);
           return `
-            <div class="cl-appt-card">
+            <div class="cl-appt-card" id="appt-${a.id}">
               <div class="cl-appt-status" style="color:${statusColor}">${statusEmoji} ${statusText}</div>
               <div class="cl-appt-service">💅 ${a.serviceName}</div>
               <div class="cl-appt-dt">📅 ${dateLabel} &nbsp;·&nbsp; 🕐 ${a.time}</div>
               <div class="cl-appt-actions">
-                <a href="https://wa.me/${waPhone}?text=${changeMsg}" target="_blank" class="cl-appt-btn change">✏️ שינוי תור</a>
-                <a href="https://wa.me/${waPhone}?text=${cancelMsg}" target="_blank" class="cl-appt-btn cancel">✕ ביטול</a>
-              </div>
-              <div style="margin-top:8px;text-align:center;font-size:12px;color:#999">
-                ביטלת בטעות? <a href="https://wa.me/${waPhone}?text=${encodeURIComponent(`היי אופק! 💅\nביטלתי בטעות את התור:\n💅 ${a.serviceName}\n📅 ${dateLabel}\n🕐 ${a.time}\nאשמח להחזיר אותו!`)}" target="_blank" style="color:#e8a4b8;text-decoration:underline">↩️ החזרת תור</a>
+                ${a.status === 'pending' ? `
+                  <button onclick="cancelAppt('${a.id}', this)" class="cl-appt-btn cancel" style="cursor:pointer">✕ ביטול תור</button>
+                ` : `
+                  <a href="https://wa.me/${waPhone}?text=${changeMsg}" target="_blank" class="cl-appt-btn change">✏️ שינוי תור</a>
+                  <a href="https://wa.me/${waPhone}?text=${cancelMsg}" target="_blank" class="cl-appt-btn cancel">✕ ביטול</a>
+                `}
               </div>
             </div>`;
         }).join('');
@@ -231,6 +232,27 @@
       s.id = cb;
       s.src = url;
       s.onerror = () => { delete window[cb]; list.innerHTML = '<p class="cl-empty">לא ניתן לטעון</p>'; };
+      document.body.appendChild(s);
+    }
+
+    function cancelAppt(id, btn) {
+      if (!confirm('בטוחה שתרצי לבטל את התור?')) return;
+      btn.textContent = 'מבטל...';
+      btn.disabled = true;
+      const cb = 'ca' + Date.now();
+      const url = WEBAPP_URL + '?action=updateStatus&callback=' + cb + '&id=' + encodeURIComponent(id) + '&status=cancelled';
+      window[cb] = () => {
+        delete window[cb]; document.getElementById(cb)?.remove();
+        const card = document.getElementById('appt-' + id);
+        if (card) {
+          card.style.opacity = '0.5';
+          card.innerHTML = '<div style="text-align:center;padding:16px;color:#888">✅ התור בוטל בהצלחה</div>';
+          setTimeout(() => card.remove(), 2000);
+        }
+      };
+      const s = document.createElement('script');
+      s.id = cb; s.src = url;
+      s.onerror = () => { delete window[cb]; btn.textContent = '✕ ביטול תור'; btn.disabled = false; alert('שגיאה, נסי שוב'); };
       document.body.appendChild(s);
     }
 
