@@ -480,6 +480,44 @@ function renderMaintenanceReminders(allAppts) {
 
 // ── ADMIN CALENDAR ──
 let adminCalYear, adminCalMonth, adminSelectedDate;
+let calView = 'month';
+let weekStart = null;
+
+// חגים ישראליים קבועים (גרגוריאני משוער)
+const IL_HOLIDAYS = {
+  '01-01': 'ראש השנה האזרחי',
+  '04-23': 'יום הזיכרון',
+  '04-24': 'יום העצמאות',
+  '05-14': 'יום ירושלים',
+  '09-22': 'ערב ראש השנה',
+  '09-23': 'ראש השנה',
+  '09-24': 'ראש השנה',
+  '10-01': 'ערב יום כיפור',
+  '10-02': 'יום כיפור',
+  '10-06': 'ערב סוכות',
+  '10-07': 'סוכות',
+  '10-13': 'הושענא רבה',
+  '10-14': 'שמחת תורה',
+  '12-25': 'חנוכה',
+  '12-26': 'חנוכה',
+};
+
+function getHoliday(dateStr) {
+  const md = dateStr.slice(5); // MM-DD
+  return IL_HOLIDAYS[md] || null;
+}
+
+function setCalView(view) {
+  calView = view;
+  document.getElementById('calViewMonth').style.background = view === 'month' ? 'var(--dark-pink)' : '';
+  document.getElementById('calViewMonth').style.color = view === 'month' ? '#fff' : '';
+  document.getElementById('calViewWeek').style.background = view === 'week' ? 'var(--dark-pink)' : '';
+  document.getElementById('calViewWeek').style.color = view === 'week' ? '#fff' : '';
+  document.getElementById('calMonthView').style.display = view === 'month' ? '' : 'none';
+  document.getElementById('calWeekView').style.display = view === 'week' ? '' : 'none';
+  if (view === 'week') renderWeekView();
+  else renderAdminCalendar();
+}
 
 function renderAdminCalendar() {
   if (!adminCalYear) { const now = new Date(); adminCalYear = now.getFullYear(); adminCalMonth = now.getMonth(); }
@@ -490,6 +528,7 @@ function renderAdminCalendar() {
   const daysInMonth = new Date(adminCalYear, adminCalMonth + 1, 0).getDate();
   const all         = getAppointments();
   const settings    = getSettings();
+  const todayStr2   = todayStr();
 
   let html = '';
   for (let i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
@@ -500,21 +539,31 @@ function renderAdminCalendar() {
     const isBlocked = settings.blockedDates.includes(dateStr);
     const isWork    = isWorkDay(dateStr);
     const isSelected = adminSelectedDate === dateStr;
+    const isToday   = dateStr === todayStr2;
+    const dow       = new Date(dateStr).getDay();
+    const isWeekend = dow === 5 || dow === 6;
+    const holiday   = getHoliday(dateStr);
     let cls = 'cal-cell admin-cal-cell';
     if (isBlocked) cls += ' blocked';
     else if (!isWork) cls += ' disabled';
     if (isSelected) cls += ' selected';
-    // נקודות צבעוניות לפי סטטוס
+    if (isToday) cls += ' cal-today';
+    if (isWeekend && !isBlocked) cls += ' cal-weekend';
     let dots = '';
     if (count > 0) {
       const hasPending   = dayAppts.some(a => a.status === 'pending');
       const hasConfirmed = dayAppts.some(a => a.status === 'confirmed');
       const hasCompleted = dayAppts.some(a => a.status === 'completed');
       if (hasPending)   dots += `<span class="cal-dot" style="background:#f0a500">${dayAppts.filter(a=>a.status==='pending').length}</span>`;
-      if (hasConfirmed) dots += `<span class="cal-dot" style="background:#25D366;${hasPending?'margin-right:2px':''}">${dayAppts.filter(a=>a.status==='confirmed').length}</span>`;
-      if (hasCompleted) dots += `<span class="cal-dot" style="background:#aaa;${(hasPending||hasConfirmed)?'margin-right:2px':''}">${dayAppts.filter(a=>a.status==='completed').length}</span>`;
+      if (hasConfirmed) dots += `<span class="cal-dot" style="background:#25D366">${dayAppts.filter(a=>a.status==='confirmed').length}</span>`;
+      if (hasCompleted) dots += `<span class="cal-dot" style="background:#aaa">${dayAppts.filter(a=>a.status==='completed').length}</span>`;
     }
-    html += `<div class="${cls}" onclick="adminSelectDay('${dateStr}')" style="flex-direction:column;gap:1px">${d}<div style="display:flex;gap:2px;justify-content:center">${dots}</div></div>`;
+    const holidayHtml = holiday ? `<div style="font-size:9px;color:#b76e79;line-height:1;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${holiday}</div>` : '';
+    html += `<div class="${cls}" onclick="adminSelectDay('${dateStr}')" style="flex-direction:column;gap:1px" draggable="false">
+      <span style="font-weight:${isToday?'700':'400'}">${d}</span>
+      ${holidayHtml}
+      <div style="display:flex;gap:2px;justify-content:center">${dots}</div>
+    </div>`;
   }
   document.getElementById('adminCalGrid').innerHTML = html;
 
@@ -522,16 +571,197 @@ function renderAdminCalendar() {
   document.getElementById('adminNextMonth').onclick = () => { adminCalMonth++; if (adminCalMonth > 11) { adminCalMonth = 0; adminCalYear++; } renderAdminCalendar(); };
 }
 
+function renderWeekView() {
+  if (!weekStart) {
+    const now = new Date();
+    now.setDate(now.getDate() - now.getDay());
+    weekStart = now;
+  }
+  const all = getAppointments();
+  const settings = getSettings();
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    days.push(d);
+  }
+  const dayNames = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+  const firstDay = days[0];
+  const lastDay  = days[6];
+  document.getElementById('weekTitle').textContent =
+    `${firstDay.getDate()}/${firstDay.getMonth()+1} - ${lastDay.getDate()}/${lastDay.getMonth()+1}/${lastDay.getFullYear()}`;
+
+  const todayStr2 = todayStr();
+  let html = '';
+  days.forEach(d => {
+    const dateStr = d.toISOString().slice(0,10);
+    const dayAppts = all.filter(a => a.date === dateStr && a.status !== 'cancelled').sort((a,b) => a.time.localeCompare(b.time));
+    const isBlocked = settings.blockedDates.includes(dateStr);
+    const isToday = dateStr === todayStr2;
+    const holiday = getHoliday(dateStr);
+    const dow = d.getDay();
+    const isWeekend = dow === 5 || dow === 6;
+    const bgColor = isToday ? '#fdf0f5' : isWeekend ? '#f9f5f7' : '#fff';
+    const borderColor = isToday ? 'var(--dark-pink)' : isBlocked ? '#e05' : '#f0e0e8';
+    html += `<div style="background:${bgColor};border:2px solid ${borderColor};border-radius:12px;padding:10px;min-height:120px;cursor:pointer" onclick="adminSelectDay('${dateStr}')">
+      <div style="font-weight:700;font-size:13px;color:${isToday?'var(--dark-pink)':'var(--dark)'};margin-bottom:4px">${dayNames[dow]} ${d.getDate()}/${d.getMonth()+1}</div>
+      ${holiday ? `<div style="font-size:10px;color:#b76e79;margin-bottom:4px">${holiday}</div>` : ''}
+      ${isBlocked ? '<div style="font-size:11px;color:#e05">🚫 חסום</div>' : ''}
+      ${dayAppts.length === 0 && !isBlocked ? '<div style="font-size:11px;color:#ccc;margin-top:8px">פנוי</div>' : ''}
+      ${dayAppts.map(a => `
+        <div draggable="true" ondragstart="dragStart(event,'${a.id}')" style="background:${a.status==='pending'?'#fff8e6':a.status==='confirmed'?'#e8f8ef':'#f5f5f5'};border-radius:8px;padding:5px 8px;margin-bottom:4px;font-size:11px;cursor:grab;border-right:3px solid ${STATUS_COLORS[a.status]}">
+          <strong>${a.time}</strong> ${sanitize(a.clientName)}
+          <div style="color:#888;font-size:10px">${sanitize(a.serviceName)}</div>
+        </div>
+      `).join('')}
+    </div>`;
+  });
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML = html;
+
+  // drop targets
+  grid.querySelectorAll('[onclick]').forEach(cell => {
+    cell.addEventListener('dragover', e => { e.preventDefault(); cell.style.outline = '2px dashed var(--dark-pink)'; });
+    cell.addEventListener('dragleave', () => { cell.style.outline = ''; });
+    cell.addEventListener('drop', e => {
+      e.preventDefault();
+      cell.style.outline = '';
+      const id = e.dataTransfer.getData('apptId');
+      const dateStr = cell.getAttribute('onclick').match(/'([^']+)'/)[1];
+      if (id && dateStr) moveApptToDate(id, dateStr);
+    });
+  });
+
+  document.getElementById('weekPrev').onclick = () => { weekStart.setDate(weekStart.getDate() - 7); renderWeekView(); };
+  document.getElementById('weekNext').onclick = () => { weekStart.setDate(weekStart.getDate() + 7); renderWeekView(); };
+}
+
 function adminSelectDay(dateStr) {
   adminSelectedDate = dateStr;
-  renderAdminCalendar();
+  if (calView === 'month') renderAdminCalendar();
+  else renderWeekView();
   const appts = getAppointments().filter(a => a.date === dateStr && a.status !== 'cancelled').sort((a, b) => a.time.localeCompare(b.time));
-  document.getElementById('adminDayTitle').textContent = formatDate(dateStr);
-  document.getElementById('adminDayAppts').innerHTML = appts.length ? appts.map(a => apptCard(a)).join('') : emptyMsg('אין תורים ביום זה');
+  const holiday = getHoliday(dateStr);
+  document.getElementById('adminDayTitle').textContent = formatDate(dateStr) + (holiday ? ` • ${holiday}` : '');
+
+  // שעות פנויות
+  const freeEl = document.getElementById('freeSlotsSummary');
+  const settings = getSettings();
+  const dow = new Date(dateStr).getDay();
+  const workDay = settings.workDays[dow];
+  if (freeEl && workDay && workDay.active && !settings.blockedDates.includes(dateStr)) {
+    const freeSlots = getFreeSlots(dateStr, appts, settings);
+    freeEl.innerHTML = freeSlots.length
+      ? `<div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 0">${freeSlots.map(s => `<span style="background:#e8f8ef;color:#1a6e3a;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600">${s}</span>`).join('')}</div>`
+      : `<div style="font-size:12px;color:#e05;padding:6px 0">🔴 יום מלא</div>`;
+  } else if (freeEl) {
+    freeEl.innerHTML = '';
+  }
+
+  // drag & drop על תורים
+  document.getElementById('adminDayAppts').innerHTML = appts.length ? appts.map(a => apptCardDraggable(a)).join('') : emptyMsg('אין תורים ביום זה');
+
   const isBlocked = getSettings().blockedDates.includes(dateStr);
   const blockBtn = document.getElementById('blockDayBtn');
   blockBtn.textContent = isBlocked ? '✅ בטל חסימה' : '🚫 חסום יום זה';
   blockBtn.onclick = () => toggleBlockDay(dateStr);
+}
+
+function getFreeSlots(dateStr, appts, settings) {
+  const dow = new Date(dateStr).getDay();
+  const customHour = (settings.customHours || []).find(c => c.date === dateStr);
+  const workDay = customHour || settings.workDays[dow];
+  if (!workDay || !workDay.active) return [];
+  const [sh, sm] = workDay.start.split(':').map(Number);
+  const [eh, em] = workDay.end.split(':').map(Number);
+  const startMin = sh * 60 + sm;
+  const endMin   = eh * 60 + em;
+  const busy = appts.map(a => {
+    const [ah, am] = a.time.split(':').map(Number);
+    const s = ah * 60 + am;
+    return { s, e: s + (Number(a.duration) || 60) };
+  });
+  const slots = [];
+  for (let m = startMin; m + 30 <= endMin; m += 30) {
+    const slotEnd = m + 30;
+    const free = !busy.some(b => m < b.e && slotEnd > b.s);
+    if (free) slots.push(`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`);
+  }
+  return slots;
+}
+
+function apptCardDraggable(appt) {
+  const card = apptCard(appt);
+  return card.replace('<div class="appt-card', `<div draggable="true" ondragstart="dragStart(event,'${sanitize(appt.id)}')" class="appt-card`);
+}
+
+function dragStart(event, id) {
+  event.dataTransfer.setData('apptId', id);
+}
+
+function moveApptToDate(id, newDate) {
+  const appts = getAppointments();
+  const appt = appts.find(a => a.id === id);
+  if (!appt || appt.date === newDate) return;
+  const oldDate = appt.date;
+  appt.date = newDate;
+  saveAppointments(appts);
+  updateDateInSheets(id, newDate, appt.time);
+  showToast(`✅ תור הועבר ל-${formatDate(newDate)}`);
+  if (calView === 'week') renderWeekView();
+  else { renderAdminCalendar(); if (adminSelectedDate) adminSelectDay(adminSelectedDate); }
+}
+
+function updateDateInSheets(id, newDate, newTime) {
+  const cb = 'ud' + Date.now();
+  const url = WEBAPP_URL + '?action=updateDate&callback=' + cb
+    + '&id=' + encodeURIComponent(id)
+    + '&date=' + encodeURIComponent(newDate)
+    + '&time=' + encodeURIComponent(newTime);
+  window[cb] = () => { delete window[cb]; document.getElementById(cb)?.remove(); };
+  const s = document.createElement('script');
+  s.id = cb; s.src = url;
+  document.body.appendChild(s);
+}
+
+function openAddApptModal(dateStr) {
+  const modal = document.getElementById('addApptModal');
+  modal.style.display = 'flex';
+  document.getElementById('addApptDate').value = dateStr || todayStr();
+  document.getElementById('addApptTime').value = '';
+  document.getElementById('addApptName').value = '';
+  document.getElementById('addApptPhone').value = '';
+  document.getElementById('addApptNotes').value = '';
+  const services = getServices();
+  document.getElementById('addApptService').innerHTML = services.map(s => `<option value="${s.id}">${s.icon} ${sanitize(s.name)} (${s.duration}דק')</option>`).join('');
+}
+
+function closeAddApptModal() {
+  document.getElementById('addApptModal').style.display = 'none';
+}
+
+function submitAddAppt() {
+  const date  = document.getElementById('addApptDate').value;
+  const time  = document.getElementById('addApptTime').value;
+  const name  = document.getElementById('addApptName').value.trim();
+  const phone = document.getElementById('addApptPhone').value.trim();
+  const notes = document.getElementById('addApptNotes').value.trim();
+  const svcId = document.getElementById('addApptService').value;
+  if (!date || !time || !name || !phone) { showToast('אנא מלאי את כל השדות', '#e05'); return; }
+  const services = getServices();
+  const svc = services.find(s => s.id === svcId) || services[0];
+  if (!svc) { showToast('אנא הגדירי שירות', '#e05'); return; }
+  const id = generateId();
+  const appt = { id, serviceName: svc.name, serviceIcon: svc.icon, duration: svc.duration, date, time, clientName: name, clientPhone: phone, notes, status: 'confirmed' };
+  const appts = getAppointments();
+  appts.push(appt);
+  saveAppointments(appts);
+  saveToSheets(appt);
+  closeAddApptModal();
+  showToast('✅ תור נוסף בהצלחה!');
+  adminSelectedDate = date;
+  if (calView === 'week') renderWeekView();
+  else { renderAdminCalendar(); adminSelectDay(date); }
 }
 
 function toggleBlockDay(dateStr) {
@@ -633,7 +863,10 @@ function syncSheets() {
 function refreshCurrentPanel() {
   const active = document.querySelector('.snav-btn.active, .bnav-btn.active')?.dataset.panel;
   if (active === 'dashboard') _renderDashboard();
-  if (active === 'calendar') { renderAdminCalendar(); if (adminSelectedDate) adminSelectDay(adminSelectedDate); }
+  if (active === 'calendar') {
+    if (calView === 'week') renderWeekView();
+    else { renderAdminCalendar(); if (adminSelectedDate) adminSelectDay(adminSelectedDate); }
+  }
   if (active === 'appointments') renderAllAppointments();
   if (active === 'stats') renderStatistics();
   if (active === 'reviews') renderReviews();

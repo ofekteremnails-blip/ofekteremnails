@@ -222,24 +222,86 @@
       <div class="panel" id="panel-calendar">
         <div class="panel-header">
           <h1 class="panel-title">יומן תורים</h1>
-        </div>
-        <div class="cal-card">
-          <div class="cal-nav">
-            <button class="cal-nav-btn" id="adminPrevMonth">&#8250;</button>
-            <span class="cal-month-title" id="adminCalTitle"></span>
-            <button class="cal-nav-btn" id="adminNextMonth">&#8249;</button>
+          <div style="display:flex;gap:8px">
+            <button class="btn-icon-round" id="calViewMonth" onclick="setCalView('month')" title="תצוגת חודש" style="background:var(--dark-pink);color:#fff">חודש</button>
+            <button class="btn-icon-round" id="calViewWeek" onclick="setCalView('week')" title="תצוגת שבוע">שבוע</button>
           </div>
-          <div class="cal-days-header">
-            <span>א׳</span><span>ב׳</span><span>ג׳</span><span>ד׳</span><span>ה׳</span><span>ו׳</span><span>ש׳</span>
-          </div>
-          <div class="cal-grid" id="adminCalGrid"></div>
         </div>
+
+        <!-- תצוגת חודש -->
+        <div id="calMonthView">
+          <div class="cal-card">
+            <div class="cal-nav">
+              <button class="cal-nav-btn" id="adminPrevMonth">&#8250;</button>
+              <span class="cal-month-title" id="adminCalTitle"></span>
+              <button class="cal-nav-btn" id="adminNextMonth">&#8249;</button>
+            </div>
+            <div class="cal-days-header">
+              <span>א׳</span><span>ב׳</span><span>ג׳</span><span>ד׳</span><span>ה׳</span><span>ו׳</span><span>ש׳</span>
+            </div>
+            <div class="cal-grid" id="adminCalGrid"></div>
+          </div>
+        </div>
+
+        <!-- תצוגת שבוע -->
+        <div id="calWeekView" style="display:none">
+          <div class="cal-card">
+            <div class="cal-nav">
+              <button class="cal-nav-btn" id="weekPrev">&#8250;</button>
+              <span class="cal-month-title" id="weekTitle"></span>
+              <button class="cal-nav-btn" id="weekNext">&#8249;</button>
+            </div>
+            <div id="weekGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px"></div>
+          </div>
+        </div>
+
         <div class="day-view-card" id="adminDayView">
           <div class="day-view-header">
             <h2 id="adminDayTitle">בחרי יום לצפייה</h2>
-            <button class="btn-block-day" id="blockDayBtn">🚫 חסום</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn-icon-round" onclick="openAddApptModal(adminSelectedDate)" title="הוסף תור" style="background:#25D366;color:#fff">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+              <button class="btn-block-day" id="blockDayBtn">🚫 חסום</button>
+            </div>
           </div>
+          <div id="freeSlotsSummary" style="margin-bottom:10px"></div>
           <div id="adminDayAppts" class="appt-list"></div>
+        </div>
+      </div>
+
+      <!-- מודל הוספת תור מהיומן -->
+      <div id="addApptModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px">
+        <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+          <h3 style="font-family:'DM Serif Display',serif;color:var(--dark);margin-bottom:20px;font-size:20px">➕ הוספת תור</h3>
+          <div class="form-field">
+            <label>תאריך</label>
+            <input type="date" id="addApptDate" class="field-input"/>
+          </div>
+          <div class="form-field">
+            <label>שעה</label>
+            <input type="time" id="addApptTime" class="field-input"/>
+          </div>
+          <div class="form-field">
+            <label>שם לקוחה</label>
+            <input type="text" id="addApptName" class="field-input" placeholder="שם מלא"/>
+          </div>
+          <div class="form-field">
+            <label>טלפון</label>
+            <input type="tel" id="addApptPhone" class="field-input" placeholder="05X-XXXXXXX"/>
+          </div>
+          <div class="form-field">
+            <label>שירות</label>
+            <select id="addApptService" class="field-input"></select>
+          </div>
+          <div class="form-field">
+            <label>הערות (אופציונלי)</label>
+            <input type="text" id="addApptNotes" class="field-input" placeholder="הערות..."/>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px">
+            <button onclick="closeAddApptModal()" style="flex:1;padding:12px;border:2px solid #e0e0e0;border-radius:12px;background:none;cursor:pointer;font-family:Heebo,sans-serif;font-size:14px;color:#888">ביטול</button>
+            <button onclick="submitAddAppt()" style="flex:2;padding:12px;border:none;border-radius:12px;background:var(--dark-pink);color:#fff;cursor:pointer;font-family:Heebo,sans-serif;font-size:14px;font-weight:700">✓ הוסף תור</button>
+          </div>
         </div>
       </div>
 

@@ -182,6 +182,14 @@ function doGet(e) {
       .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
   }
 
+  if (action === 'updateDate') {
+    updateDateAndTime(e.parameter.id, e.parameter.date, e.parameter.time);
+    const json = JSON.stringify({ success: true });
+    const out  = callback ? callback + '(' + json + ')' : json;
+    return ContentService.createTextOutput(out)
+      .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
+  }
+
   if (action === 'updateStatus') {
     updateStatus(e.parameter.id, e.parameter.status);
     const json = JSON.stringify({ success: true });
@@ -391,6 +399,19 @@ function lookupClient(phone) {
   }
 
   return { name: null };
+}
+
+function updateDateAndTime(id, newDate, newTime) {
+  const sheet = getSheet();
+  if (sheet.getLastRow() <= 1) return;
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 4).getValues();
+  for (let i = 0; i < rows.length; i++) {
+    if (String(rows[i][0]) === String(id)) {
+      sheet.getRange(i + 2, 3).setValue(newDate);
+      sheet.getRange(i + 2, 4).setValue(newTime);
+      return;
+    }
+  }
 }
 
 function updateStatus(id, status) {
