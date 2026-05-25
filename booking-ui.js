@@ -139,32 +139,34 @@ function loadMyAppointments(phone) {
   const card = document.getElementById('myAppointmentsCard');
   const list = document.getElementById('myApptsList');
   card.classList.remove('hidden');
-  list.innerHTML = '<p style="color:#aaa;font-size:13px;padding:8px 0">טוען תורים...</p>';
 
-  const cb = 'ma' + Date.now();
-  const url = WEBAPP_URL + '?action=load&callback=' + cb;
-  window[cb] = (rows) => {
-    delete window[cb]; document.getElementById(cb)?.remove();
-    const appts = (Array.isArray(rows) ? rows : []).map(r => {
-      let time = String(r['שעה'] || '');
+  const norm = (p) => String(p||'').replace(/\D/g,'');
+
+  function renderAppts(rows) {
+    const appts = rows.map(r => {
+      let time = String(r['שעה'] || r.time || '');
       if (time.includes('T') || time.includes('1899')) {
         const d = new Date(time);
         time = String(d.getUTCHours()).padStart(2,'0') + ':' + String(d.getUTCMinutes()).padStart(2,'0');
       }
-      let date = String(r['תאריך'] || '');
+      let date = String(r['תאריך'] || r.date || '');
       if (date.includes('T') || date.includes('Z')) {
         const d = new Date(date);
         date = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
       }
-      let p = String(r['טלפון'] || '');
+      let p = String(r['טלפון'] || r.clientPhone || '');
       if (p && !p.startsWith('0') && !p.startsWith('+') && p.length <= 9) p = '0' + p;
-      return { serviceName: String(r['שירות'] || ''), date, time, status: String(r['סטטוס'] || ''), phone: p };
-    }).filter(a => {
-      const norm = (p) => p.replace(/\D/g,'');
-      return norm(a.phone) === norm(phone) && (a.status === 'pending' || a.status === 'confirmed');
-    }).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+      return {
+        serviceName: String(r['שירות'] || r.serviceName || ''),
+        date, time,
+        status: String(r['סטטוס'] || r.status || ''),
+        phone: p
+      };
+    }).filter(a => norm(a.phone) === norm(phone) && (a.status === 'pending' || a.status === 'confirmed'))
+      .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 
     if (appts.length === 0) { card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
     const waPhone = (getSettings().waPhone || '972546827299').replace(/\D/g,'');
     list.innerHTML = appts.map(a => {
       const statusEmoji = a.status === 'confirmed' ? '✅' : '⏳';
@@ -183,10 +185,34 @@ function loadMyAppointments(phone) {
           </div>
         </div>`;
     }).join('');
+  }
+
+  // הצג מיד מ-localStorage
+  const cached = getAppointments();
+  if (cached.length > 0) renderAppts(cached);
+  else list.innerHTML = '<p style="color:#aaa;font-size:13px;padding:8px 0">טוען תורים...</p>';
+
+  // רענן מ-Sheets ברקע
+  const cb = 'ma' + Date.now();
+  const url = WEBAPP_URL + '?action=load&callback=' + cb;
+  window[cb] = (rows) => {
+    delete window[cb]; document.getElementById(cb)?.remove();
+    if (Array.isArray(rows) && rows.length > 0) {
+      saveAppointments(rows.map(r => ({
+        id: String(r['ID'] || ''),
+        serviceName: String(r['שירות'] || ''),
+        date: String(r['תאריך'] || ''),
+        time: String(r['שעה'] || ''),
+        clientPhone: String(r['טלפון'] || ''),
+        status: String(r['סטטוס'] || 'pending'),
+        duration: Number(r['משך'] || 60)
+      })).filter(a => a.id));
+      renderAppts(rows);
+    }
   };
   const s = document.createElement('script');
   s.id = cb; s.src = url;
-  s.onerror = () => { delete window[cb]; list.innerHTML = '<p style="color:#aaa;font-size:13px">לא ניתן לטעון תורים</p>'; };
+  s.onerror = () => { delete window[cb]; };
   document.body.appendChild(s);
 }
 
