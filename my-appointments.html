@@ -178,7 +178,7 @@
       window[cb] = (rows) => {
         delete window[cb];
         document.getElementById(cb)?.remove();
-        const norm = p => p.replace(/\D/g, '');
+        const norm = p => { let n = String(p||'').replace(/\D/g,''); if(n.startsWith('972')) n='0'+n.slice(3); if(!n.startsWith('0')&&n.length>0) n='0'+n; return n; };
         const appts = (Array.isArray(rows) ? rows : []).map(r => {
           let time = String(r['שעה'] || '');
           if (time.includes('T') || time.includes('1899')) {
@@ -191,7 +191,7 @@
             date = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
           }
           let p = String(r['טלפון'] || '');
-          if (p && !p.startsWith('0') && !p.startsWith('+') && p.length <= 9) p = '0' + p;
+          p = norm(p);
           return { serviceName: String(r['שירות'] || ''), date, time, status: String(r['סטטוס'] || ''), phone: p };
         }).filter(a => norm(a.phone) === norm(client.phone) && (a.status === 'pending' || a.status === 'confirmed'))
           .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
