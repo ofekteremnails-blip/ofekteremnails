@@ -737,12 +737,42 @@ function renderVacations() {
   const settings = getSettings();
   const list = document.getElementById('vacationsList');
   const vacations = settings.vacations || [];
-  
+
+  // הגדר את כפתור addVacation פעם אחת בלבד
+  const addBtn = document.getElementById('addVacation');
+  if (addBtn && !addBtn._bound) {
+    addBtn._bound = true;
+    addBtn.addEventListener('click', () => {
+      const start = document.getElementById('vacationStart').value;
+      const end = document.getElementById('vacationEnd').value;
+      if (!start || !end) { showToast('אנא בחרי תאריך התחלה וסיום', '#e05'); return; }
+      if (start > end) { showToast('תאריך הסיום חייב להיות אחרי תאריך ההתחלה', '#e05'); return; }
+      const s = getSettings();
+      if (!s.vacations) s.vacations = [];
+      const dates = [];
+      const current = new Date(start);
+      const endDate = new Date(end);
+      while (current <= endDate) {
+        const dateStr = current.toISOString().slice(0, 10);
+        if (!s.blockedDates.includes(dateStr)) s.blockedDates.push(dateStr);
+        dates.push(dateStr);
+        current.setDate(current.getDate() + 1);
+      }
+      s.vacations.push({ start, end, dates });
+      saveSettings(s);
+      document.getElementById('vacationStart').value = '';
+      document.getElementById('vacationEnd').value = '';
+      renderVacations();
+      renderBlockedDates();
+      showToast(`✅ חופשה נקבעה! ${dates.length} ימים נחסמו`);
+    });
+  }
+
   if (vacations.length === 0) {
     list.innerHTML = '<p style="color:#aaa;font-size:13px">אין חופשות מתוכננות</p>';
     return;
   }
-  
+
   list.innerHTML = vacations.sort((a, b) => a.start.localeCompare(b.start)).map((v, idx) => `
     <div class="blocked-tag" style="background:#fff3cd;border-color:#ffc107;color:#856404;padding:10px 16px;margin-bottom:8px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -754,48 +784,6 @@ function renderVacations() {
       </div>
     </div>
   `).join('');
-  
-  document.getElementById('addVacation').onclick = () => {
-    const start = document.getElementById('vacationStart').value;
-    const end = document.getElementById('vacationEnd').value;
-    
-    if (!start || !end) {
-      showToast('אנא בחרי תאריך התחלה וסיום', '#e05');
-      return;
-    }
-    
-    if (start > end) {
-      showToast('תאריך הסיום חייב להיות אחרי תאריך ההתחלה', '#e05');
-      return;
-    }
-    
-    const s = getSettings();
-    if (!s.vacations) s.vacations = [];
-    
-    // חסום כל התאריכים בטווח
-    const dates = [];
-    const current = new Date(start);
-    const endDate = new Date(end);
-    
-    while (current <= endDate) {
-      const dateStr = current.toISOString().slice(0, 10);
-      if (!s.blockedDates.includes(dateStr)) {
-        s.blockedDates.push(dateStr);
-      }
-      dates.push(dateStr);
-      current.setDate(current.getDate() + 1);
-    }
-    
-    s.vacations.push({ start, end, dates });
-    saveSettings(s);
-    
-    document.getElementById('vacationStart').value = '';
-    document.getElementById('vacationEnd').value = '';
-    
-    renderVacations();
-    renderBlockedDates();
-    showToast(`✅ חופשה נקבעה! ${dates.length} ימים נחסמו`);
-  };
 }
 
 function removeVacation(idx) {
@@ -1318,15 +1306,10 @@ function saveSettingsHandler() {
   settings.waPhone = document.getElementById('waPhoneInput').value.trim();
   const lbStart = document.getElementById('lunchBreakStart').value;
   const lbEnd   = document.getElementById('lunchBreakEnd').value;
-  settings.lunchBreak = (lbStart && lbEnd) ? { start: lbStart, end: lbEnd } : null;
+  if (lbStart && lbEnd) settings.lunchBreak = { start: lbStart, end: lbEnd };
+  else delete settings.lunchBreak;
   const newPass = document.getElementById('newPassInput').value.trim();
   if (newPass) settings.adminPass = newPass;
-
-  // הפסקת צהריים
-  const lunchStart = document.getElementById('lunchBreakStart')?.value;
-  const lunchEnd   = document.getElementById('lunchBreakEnd')?.value;
-  if (lunchStart && lunchEnd) settings.lunchBreak = { start: lunchStart, end: lunchEnd };
-  else delete settings.lunchBreak;
 
   document.querySelectorAll('.wd-active').forEach(cb => {
     const dow = cb.dataset.dow;

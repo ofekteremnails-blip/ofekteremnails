@@ -140,9 +140,10 @@ function loadMyAppointments(phone) {
   const list = document.getElementById('myApptsList');
   card.classList.remove('hidden');
 
-  const norm = (p) => String(p||'').replace(/\D/g,'');
+  const norm = (p) => { let n = String(p||'').replace(/\D/g,''); if(n.startsWith('972')) n='0'+n.slice(3); if(!n.startsWith('0')&&n.length>0) n='0'+n; return n; };
 
   function renderAppts(rows) {
+    const today = todayStrTZ();
     const appts = rows.map(r => {
       let time = String(r['שעה'] || r.time || '');
       if (time.includes('T') || time.includes('1899')) {
@@ -155,14 +156,13 @@ function loadMyAppointments(phone) {
         date = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
       }
       let p = String(r['טלפון'] || r.clientPhone || '');
-      if (p && !p.startsWith('0') && !p.startsWith('+') && p.length <= 9) p = '0' + p;
       return {
         serviceName: String(r['שירות'] || r.serviceName || ''),
         date, time,
         status: String(r['סטטוס'] || r.status || ''),
-        phone: p
+        phone: norm(p)
       };
-    }).filter(a => norm(a.phone) === norm(phone) && (a.status === 'pending' || a.status === 'confirmed'))
+    }).filter(a => norm(a.phone) === norm(phone) && (a.status === 'pending' || a.status === 'confirmed') && a.date >= today)
       .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 
     if (appts.length === 0) { card.classList.add('hidden'); return; }
@@ -288,7 +288,7 @@ function bindSteps() {
   document.getElementById('toStep1Back').addEventListener('click', () => showStep(1));
   document.getElementById('toStep3').addEventListener('click', () => { showStep(3); renderSlots(); });
   document.getElementById('toStep2Back').addEventListener('click', () => showStep(2));
-  document.getElementById('toStep4').addEventListener('click', () => { showStep(4); renderSummaryMini(); });
+  document.getElementById('toStep4').addEventListener('click', () => { showStep(4); renderSummaryMini(); prefillClientDetails(); });
   document.getElementById('toStep3Back').addEventListener('click', () => showStep(3));
   document.getElementById('bookingForm').addEventListener('submit', submitBooking);
 }

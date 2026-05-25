@@ -193,8 +193,10 @@
           let p = String(r['טלפון'] || '');
           p = norm(p);
           return { id: String(r['ID'] || ''), serviceName: String(r['שירות'] || ''), date, time, status: String(r['סטטוס'] || ''), phone: p };
-        }).filter(a => norm(a.phone) === norm(client.phone) && (a.status === 'pending' || a.status === 'confirmed'))
-          .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+        }).filter(a => {
+          const today = new Date().toISOString().slice(0,10);
+          return norm(a.phone) === norm(client.phone) && (a.status === 'pending' || a.status === 'confirmed') && a.date >= today;
+        }).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 
         if (appts.length === 0) {
           const noApptsMsg = client.name 
@@ -203,7 +205,12 @@
           list.innerHTML = noApptsMsg;
           return;
         }
-        const waPhone = '972546827299';
+        // טען מספר וואטסאפ מההגדרות
+        let waPhone = '972546827299';
+        try {
+          const s = localStorage.getItem('settings');
+          if (s) { const p = JSON.parse(s).waPhone; if (p) waPhone = p.replace(/\D/g,''); }
+        } catch(e) {}
         list.innerHTML = appts.map(a => {
           const statusEmoji = a.status === 'confirmed' ? '✅' : '⏳';
           const statusText = a.status === 'confirmed' ? 'מאושר' : 'ממתין לאישור';
