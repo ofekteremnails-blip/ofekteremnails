@@ -1,3 +1,4 @@
+// Chatbot Widget
 (function() {
   const widgetHTML = `
     <div id="chatbot-widget">
@@ -34,26 +35,23 @@
       font-family: 'DM Sans', sans-serif;
     }
     .chatbot-btn {
-      background: linear-gradient(135deg, #c9a0a0, #a07080);
+      background: linear-gradient(135deg, #e8a4b8, #c97a96);
       color: white;
       border: none;
       border-radius: 50px;
       padding: 15px 25px;
       cursor: pointer;
-      box-shadow: 0 4px 20px rgba(160,112,128,0.4);
+      box-shadow: 0 4px 20px rgba(232,164,184,0.4);
       display: flex;
       align-items: center;
       gap: 10px;
       transition: all 0.3s;
       animation: chatPulse 2s infinite;
     }
-    .chatbot-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 25px rgba(160,112,128,0.6);
-    }
+    .chatbot-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 25px rgba(232,164,184,0.6); }
     @keyframes chatPulse {
-      0%, 100% { box-shadow: 0 4px 20px rgba(160,112,128,0.4); }
-      50% { box-shadow: 0 4px 30px rgba(160,112,128,0.7); }
+      0%,100% { box-shadow: 0 4px 20px rgba(232,164,184,0.4); }
+      50% { box-shadow: 0 4px 30px rgba(232,164,184,0.7); }
     }
     .chatbot-icon { font-size: 24px; }
     .chatbot-text { font-weight: 600; font-size: 16px; }
@@ -66,20 +64,16 @@
       height: 550px;
       max-height: calc(100vh - 100px);
       background: white;
-      border-radius: 4px;
-      box-shadow: 0 10px 40px rgba(107,76,85,0.2);
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
       display: flex;
       flex-direction: column;
       overflow: hidden;
       transition: all 0.3s;
     }
-    .chatbot-window.hidden {
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(20px) scale(0.95);
-    }
+    .chatbot-window.hidden { opacity: 0; pointer-events: none; transform: translateY(20px) scale(0.95); }
     .chatbot-header {
-      background: linear-gradient(135deg, #6b4c55, #a07080);
+      background: linear-gradient(135deg, #e8a4b8, #c97a96);
       color: white;
       padding: 20px;
       display: flex;
@@ -88,100 +82,60 @@
     }
     .chatbot-header-content { display: flex; align-items: center; gap: 12px; }
     .chatbot-avatar { font-size: 32px; }
-    .chatbot-header h3 { margin: 0; font-size: 18px; font-weight: 600; }
+    .chatbot-header h3 { margin: 0; font-size: 18px; font-weight: 700; }
     .chatbot-header p { margin: 0; font-size: 13px; opacity: 0.9; }
     .chatbot-close-btn {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: white;
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 18px;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
+      background: rgba(255,255,255,0.2); border: none; color: white;
+      width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+      font-size: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
     }
     .chatbot-close-btn:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
-    .chatbot-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      background: #faf7f5;
-    }
-    .chat-message { margin-bottom: 16px; animation: slideIn 0.3s ease; }
-    @keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .chatbot-messages { flex: 1; overflow-y: auto; padding: 20px; background: #f9f9f9; }
+    .chat-message { margin-bottom: 16px; animation: chatSlideIn 0.3s ease; }
+    @keyframes chatSlideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
     .message-bot { display: flex; gap: 10px; align-items: start; }
     .message-user { display: flex; gap: 10px; align-items: start; flex-direction: row-reverse; }
-    .message-avatar {
-      width: 36px; height: 36px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; flex-shrink: 0;
-    }
-    .bot-avatar { background: linear-gradient(135deg, #c9a0a0, #a07080); }
-    .user-avatar { background: #6b4c55; }
-    .message-bubble { max-width: 70%; padding: 10px 14px; border-radius: 14px; line-height: 1.5; font-size: 14px; }
-    .bot-bubble { background: white; color: #3d2e32; border-bottom-left-radius: 4px; border: 1px solid #ede0da; }
-    .user-bubble { background: #6b4c55; color: white; border-bottom-right-radius: 4px; }
-    .quick-replies { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding: 0 46px; }
+    .message-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+    .bot-avatar { background: linear-gradient(135deg, #e8a4b8, #c97a96); }
+    .user-avatar { background: #8b5a7d; }
+    .message-bubble { max-width:70%; padding:10px 14px; border-radius:14px; line-height:1.5; font-size:14px; }
+    .bot-bubble { background: white; color: #333; border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .user-bubble { background: #8b5a7d; color: white; border-bottom-right-radius: 4px; }
+    .quick-replies { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; padding:0 46px; }
     .quick-reply-btn {
-      background: white;
-      border: 1.5px solid #c9a0a0;
-      color: #6b4c55;
-      padding: 8px 14px;
-      border-radius: 50px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: 'DM Sans', sans-serif;
+      background: white; border: 2px solid #e8a4b8; color: #8b5a7d;
+      padding: 8px 14px; border-radius: 16px; font-size: 13px; cursor: pointer;
+      transition: all 0.2s; font-family: 'DM Sans', sans-serif;
     }
-    .quick-reply-btn:hover { background: #f2e0dc; border-color: #a07080; transform: translateY(-2px); }
-    .chatbot-input-area {
-      padding: 16px;
-      background: white;
-      border-top: 1px solid #ede0da;
-      display: flex;
-      gap: 10px;
-    }
+    .quick-reply-btn:hover { background: #e8a4b8; color: white; transform: translateY(-2px); }
+    .chatbot-input-area { padding:16px; background:white; border-top:1px solid #e0e0e0; display:flex; gap:10px; }
     #chatbot-input {
-      flex: 1;
-      padding: 10px 14px;
-      border: 1px solid #ede0da;
-      border-radius: 50px;
-      font-size: 14px;
-      font-family: 'DM Sans', sans-serif;
-      outline: none;
-      background: #faf7f5;
-      transition: border-color 0.2s;
+      flex:1; padding:10px 14px; border:2px solid #e0e0e0; border-radius:20px;
+      font-size:14px; font-family:'DM Sans',sans-serif; transition:border-color 0.2s; direction:rtl;
     }
-    #chatbot-input:focus { border-color: #a07080; background: #fff; }
+    #chatbot-input:focus { outline:none; border-color:#e8a4b8; }
     .chatbot-send-btn {
-      background: linear-gradient(135deg, #c9a0a0, #a07080);
-      color: white;
-      border: none;
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      transition: transform 0.2s;
+      background: linear-gradient(135deg, #e8a4b8, #c97a96); color:white; border:none;
+      width:40px; height:40px; border-radius:50%; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; font-size:18px; transition:transform 0.2s;
     }
     .chatbot-send-btn:hover { transform: scale(1.1); }
-    .typing-indicator { display: flex; gap: 4px; padding: 10px 14px; }
-    .typing-dot { width: 8px; height: 8px; background: #c9a0a0; border-radius: 50%; animation: typing 1.4s infinite; }
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes typing { 0%,60%,100% { transform:translateY(0); } 30% { transform:translateY(-8px); } }
-    @media (max-width: 768px) {
-      #chatbot-widget { bottom: 10px; right: 10px; }
-      .chatbot-window { width: calc(100vw - 20px); height: calc(100vh - 80px); bottom: 10px; right: 10px; }
-      .chatbot-btn { padding: 12px 20px; }
-      .chatbot-text { font-size: 14px; }
+    .typing-indicator { display:flex; gap:4px; padding:10px 14px; }
+    .typing-dot { width:8px; height:8px; background:#999; border-radius:50%; animation:chatTyping 1.4s infinite; }
+    .typing-dot:nth-child(2) { animation-delay:0.2s; }
+    .typing-dot:nth-child(3) { animation-delay:0.4s; }
+    @keyframes chatTyping { 0%,60%,100% { transform:translateY(0); } 30% { transform:translateY(-8px); } }
+    @media (max-width:768px) {
+      #chatbot-widget { bottom:80px; right:10px; }
+      .chatbot-window { width:calc(100vw - 20px); height:calc(100vh - 160px); bottom:80px; right:10px; }
+      .chatbot-btn { padding:12px 20px; }
+      .chatbot-text { font-size:14px; }
     }
   `;
 
-  const style = document.createElement('style');
-  style.textContent = widgetCSS;
-  document.head.appendChild(style);
+  const styleEl = document.createElement('style');
+  styleEl.textContent = widgetCSS;
+  document.head.appendChild(styleEl);
   document.body.insertAdjacentHTML('beforeend', widgetHTML);
 
   const chatbotButton   = document.getElementById('chatbot-button');
@@ -207,88 +161,100 @@
     chatbotButton.style.display = 'flex';
   });
 
-  function initChatbot() {
-    setTimeout(() => {
-      addMessage(
-        'היי! 👋 אני הצ\'אט בוט של אופק 💅\n\nאני כאן כדי לענות על כל השאלות שלך!\n\nמה תרצי לדעת?',
-        false,
-        ['שעות פעילות', 'כמה עולה לק ג\'ל?', 'איפה את נמצאת?', 'קביעת תור']
-      );
-    }, 400);
+  function getWaPhone() {
+    try {
+      if (typeof getSettings === 'function') {
+        const p = getSettings().waPhone;
+        if (p) return p.replace(/\D/g, '');
+      }
+    } catch(e) {}
+    return '972546827299';
+  }
+
+  function getWorkHoursText() {
+    if (typeof getSettings !== 'function') return '🕐 לשעות הפעילות המעודכנות - שלחי לי הודעה בוואטסאפ 💅';
+    const settings = getSettings();
+    const dayNames = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+    let text = '🕐 שעות הפעילות שלי:\n\n';
+    Object.entries(settings.workDays).forEach(([dow, day]) => {
+      text += day.active ? `🗓️ ${dayNames[dow]}: ${day.start}–${day.end}\n` : `🗓️ ${dayNames[dow]}: סגור\n`;
+    });
+    return text;
   }
 
   function getServicesText() {
-    if (typeof getServices !== 'function') return 'לפרטים על מחירים - צרי קשר בוואטסאפ! 💕';
+    if (typeof getServices !== 'function') return 'לא הצלחתי לטעון את המחירון, נסי שוב או צרי קשר בוואטסאפ 💕';
     const services = getServices();
     let text = '💰 מחירון השירותים:\n\n';
-    services.forEach(s => { text += `${s.icon} ${s.name} - ₪${s.price}\n`; });
-    text += '\n📞 למבצעים - צרי קשר בוואטסאפ! 💕';
+    services.forEach(s => { text += `${s.icon} ${s.name}${s.price ? ' - ₪' + s.price : ''} (${s.duration} דק\')\n`; });
     return text;
   }
 
   const faqData = {
     'שעות פעילות': {
-      answer: '🕐 שעות הפעילות שלי:\n\n🗓️ ראשון - חמישי: 10:00-20:00\n🗓️ שישי: 10:00-14:00\n🗓️ שבת: סגור\n\n💡 ניתן לתאם תורים מיוחדים לפי בקשה 💅',
-      quickReplies: ['כמה עולה לק ג\'ל?', 'קביעת תור', 'איפה את נמצאת?']
+      get answer() { return getWorkHoursText(); },
+      quickReplies: ['מחירים', 'קביעת תור', 'כמה זמן מחזיק?']
     },
     'מחיר': {
       get answer() { return getServicesText(); },
-      quickReplies: ['שעות פעילות', 'קביעת תור בוואטסאפ']
-    },
-    'מיקום': {
-      answer: '📍 הכתובת המדויקת תישלח לך בוואטסאפ בעת קביעת התור 💅\n\n🚗 חניות בשפע באזור!',
-      quickReplies: ['קבלת כתובת בוואטסאפ', 'קביעת תור', 'שעות פעילות']
+      quickReplies: ['שעות פעילות', 'קביעת תור', 'כמה זמן מחזיק?']
     },
     'תור': {
-      answer: '📅 מעולה! בואי נקבע לך תור\n\n1️⃣ דרך האתר - לחצי על הכפתור למטה\n2️⃣ דרך וואטסאפ - שלחי לי הודעה\n\nמה נוח לך יותר? 💅',
+      answer: '📅 מעולה! בואי נקבע לך תור 💅\n\nאת יכולה לקבוע בשתי דרכים:\n\n1️⃣ דרך האתר - מהיר ונוח\n2️⃣ דרך וואטסאפ - שלחי לי הודעה\n\nמה נוח לך?',
       quickReplies: ['קביעת תור באתר', 'קביעת תור בוואטסאפ']
     },
     'עמידות': {
-      answer: '💪 לק הג\'ל מחזיק בין 2-3 שבועות!\n\nעם טיפול נכון - הלק יישאר מושלם! 💅✨',
-      quickReplies: ['טיפים לשמירה', 'קביעת תור']
+      answer: '💪 לק הג\'ל מחזיק בין 2-3 שבועות!\n\nזה תלוי ב:\n✓ סוג הפעילות שלך\n✓ טיפול נכון בציפורניים\n✓ שימוש בכפפות בעבודות בית\n\nעם טיפול נכון - הלק יישאר מושלם! ✨',
+      quickReplies: ['טיפים לשמירה', 'מחירים', 'קביעת תור']
     },
     'טיפים': {
-      answer: '💡 טיפים לשמירה על הלק:\n\n✓ השתמשי בכפפות בעבודות בית\n✓ הימנעי מחשיפה ממושכת למים חמים\n✓ אל תקלפי את הלק בעצמך!\n✓ חזרי לטיפול כל 2-3 שבועות 💅',
-      quickReplies: ['קביעת תור', 'שעות פעילות']
+      answer: '💡 טיפים לשמירה על הלק:\n\n✓ השתמשי בכפפות בעבודות בית\n✓ הימנעי מחשיפה ממושכת למים חמים\n✓ שמרי על לחות הידיים\n✓ אל תקלפי את הלק בעצמך!\n✓ חזרי לטיפול כל 2-3 שבועות 💅',
+      quickReplies: ['כמה זמן מחזיק?', 'מחירים', 'קביעת תור']
+    },
+    'ביטול': {
+      answer: '🔄 ביטול או שינוי תור:\n\nניתן לבטל או לשנות תור עד 24 שעות לפני המועד 📅\n\nפשוט שלחי לי הודעה בוואטסאפ או דרך האזור האישי באתר 💬',
+      quickReplies: ['קביעת תור בוואטסאפ', 'קביעת תור באתר']
     },
     'תשלום': {
-      answer: '💳 אפשרויות תשלום:\n\n✓ מזומן 💵\n✓ ביט / פייבוקס 📱\n✓ העברה בנקאית 🏦',
-      quickReplies: ['קביעת תור', 'שעות פעילות']
+      answer: '💳 אפשרויות תשלום:\n\n✓ מזומן 💵\n✓ ביט / פייבוקס 📱\n✓ העברה בנקאית 🏦\n\nהתשלום מתבצע בסיום הטיפול 💅',
+      quickReplies: ['מחירים', 'קביעת תור']
     }
   };
 
   const intentKeywords = {
-    'שעות פעילות': ['שעות', 'פעילות', 'פתוח', 'סגור', 'מתי', 'זמינה', 'עובדת'],
-    'מחיר': ['מחיר', 'עולה', 'כמה', 'עלות', 'מחירון'],
-    'מיקום': ['איפה', 'מיקום', 'כתובת', 'נמצאת', 'הגעה'],
-    'תור': ['תור', 'קביעה', 'לקבוע', 'זימון'],
-    'עמידות': ['מחזיק', 'עמיד', 'נשאר', 'כמה זמן'],
-    'טיפים': ['טיפים', 'שמירה', 'לשמור', 'המלצות'],
-    'תשלום': ['תשלום', 'לשלם', 'מזומן', 'ביט', 'אשראי']
+    'שעות פעילות': ['שעות','פעילות','פתוח','סגור','מתי','זמינה','עובדת','ימים'],
+    'מחיר': ['מחיר','עולה','כמה','עלות','מחירון','לק','טיפסים','בנייה','שירותים'],
+    'תור': ['תור','קביעה','לקבוע','זימון','פגישה'],
+    'עמידות': ['מחזיק','עמיד','כמה זמן','נשאר','עמידות'],
+    'טיפים': ['טיפים','שמירה','לשמור','המלצות'],
+    'ביטול': ['ביטול','לבטל','שינוי','לשנות'],
+    'תשלום': ['תשלום','לשלם','מזומן','ביט','אשראי','פייבוקס']
   };
 
-  function findIntent(message) {
-    const lower = message.toLowerCase();
+  function findIntent(msg) {
+    const lower = msg.toLowerCase();
     for (const [intent, keywords] of Object.entries(intentKeywords)) {
-      for (const kw of keywords) {
-        if (lower.includes(kw)) return intent;
-      }
+      if (keywords.some(k => lower.includes(k))) return intent;
     }
     return null;
   }
 
   function addMessage(text, isUser = false, quickReplies = []) {
-    const div = document.createElement('div');
-    div.className = `chat-message ${isUser ? 'message-user' : 'message-bot'}`;
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-message ${isUser ? 'message-user' : 'message-bot'}`;
+
     const avatar = document.createElement('div');
     avatar.className = `message-avatar ${isUser ? 'user-avatar' : 'bot-avatar'}`;
     avatar.textContent = isUser ? '👤' : '💅';
+
     const bubble = document.createElement('div');
     bubble.className = `message-bubble ${isUser ? 'user-bubble' : 'bot-bubble'}`;
     bubble.innerHTML = text.replace(/\n/g, '<br>');
-    div.appendChild(avatar);
-    div.appendChild(bubble);
-    chatbotMessages.appendChild(div);
+
+    msgDiv.appendChild(avatar);
+    msgDiv.appendChild(bubble);
+    chatbotMessages.appendChild(msgDiv);
+
     if (quickReplies.length > 0) {
       const repliesDiv = document.createElement('div');
       repliesDiv.className = 'quick-replies';
@@ -301,23 +267,29 @@
       });
       chatbotMessages.appendChild(repliesDiv);
     }
+
     chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
   }
 
   function showTyping() {
     const div = document.createElement('div');
-    div.className = 'chat-message message-bot'; div.id = 'typingIndicator';
+    div.className = 'chat-message message-bot';
+    div.id = 'typingIndicator';
     const avatar = document.createElement('div');
-    avatar.className = 'message-avatar bot-avatar'; avatar.textContent = '💅';
+    avatar.className = 'message-avatar bot-avatar';
+    avatar.textContent = '💅';
     const bubble = document.createElement('div');
     bubble.className = 'message-bubble bot-bubble typing-indicator';
     bubble.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-    div.appendChild(avatar); div.appendChild(bubble);
+    div.appendChild(avatar);
+    div.appendChild(bubble);
     chatbotMessages.appendChild(div);
     chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
   }
 
-  function hideTyping() { document.getElementById('typingIndicator')?.remove(); }
+  function hideTyping() {
+    document.getElementById('typingIndicator')?.remove();
+  }
 
   function handleMessage(message) {
     if (!message.trim()) return;
@@ -331,19 +303,32 @@
         addMessage(faqData[intent].answer, false, faqData[intent].quickReplies);
       } else {
         addMessage(
-          'מצטערת, לא הבנתי 😅\n\nאת יכולה לשאול על:\n• שעות פעילות\n• מחירים\n• קביעת תור\n• מיקום',
+          'מצטערת, לא הבנתי 😅\n\nאת יכולה לשאול אותי על:\n• שעות פעילות\n• מחירים\n• קביעת תור\n• עמידות הלק\n• תשלום',
           false,
-          ['שעות פעילות', 'כמה עולה לק ג\'ל?', 'קביעת תור']
+          ['שעות פעילות', 'מחירים', 'קביעת תור']
         );
       }
-    }, 1000);
+    }, 900);
   }
 
   function handleQuickReply(reply) {
     if (reply === 'קביעת תור באתר') { window.location.href = 'booking.html'; return; }
-    if (reply === 'קביעת תור בוואטסאפ') { window.open('https://wa.me/972546827299?text=היי%20אופק!%20אשמח%20לקבוע%20תור%20💅', '_blank'); return; }
-    if (reply === 'קבלת כתובת בוואטסאפ') { window.open('https://wa.me/972546827299?text=היי%20אופק!%20אשמח%20לקבל%20את%20הכתובת%20💅', '_blank'); return; }
+    if (reply === 'קביעת תור בוואטסאפ') {
+      window.open(`https://wa.me/${getWaPhone()}?text=${encodeURIComponent('היי אופק! אשמח לקבוע תור 💅')}`, '_blank');
+      return;
+    }
     handleMessage(reply);
+  }
+
+  function initChatbot() {
+    if (typeof loadSettingsFromSheets === 'function') loadSettingsFromSheets().catch(() => {});
+    setTimeout(() => {
+      addMessage(
+        'היי! 👋 אני הצ\'אט בוט של אופק תרם ניילס 💅\n\nאני כאן לענות על כל השאלות שלך!\n\nמה תרצי לדעת?',
+        false,
+        ['שעות פעילות', 'מחירים', 'קביעת תור', 'כמה זמן מחזיק?']
+      );
+    }, 400);
   }
 
   chatbotSend.addEventListener('click', () => handleMessage(chatbotInput.value));
