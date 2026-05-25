@@ -72,6 +72,8 @@ function doGet(e) {
       status: e.parameter.status || 'pending'
     };
     saveAppointment(data);
+    // תמיד שמור/עדכן לקוח בטבלת לקוחות
+    if (data.clientName && data.clientPhone) saveClient(data.clientName, data.clientPhone);
     const json = JSON.stringify({ success: true });
     const out  = callback ? callback + '(' + json + ')' : json;
     return ContentService.createTextOutput(out)
