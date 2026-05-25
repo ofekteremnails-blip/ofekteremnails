@@ -696,6 +696,33 @@ footer p { font-size: 12px; margin-bottom: 6px; letter-spacing: 0.3px; }
 }
 .footer-ig svg { width: 16px; height: 16px; }
 .footer-ig:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+.footer-landify {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 10px 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.3);
+}
+.footer-landify-link {
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: color 0.2s;
+}
+.footer-landify-link:hover { color: #fff; }
+.footer-landify-ig {
+  display: inline-flex;
+  align-items: center;
+  color: rgba(255,255,255,0.4);
+  transition: color 0.2s;
+}
+.footer-landify-ig svg { width: 14px; height: 14px; }
+.footer-landify-ig:hover { color: #fff; }
 
 /* ── INSTAGRAM FLOAT ── */
 .ig-float {
