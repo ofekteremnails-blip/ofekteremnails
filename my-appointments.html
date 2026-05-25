@@ -88,7 +88,7 @@
   </footer>
 
   <script>
-    const WEBAPP_URL = 'https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbxWE5GsJqR05MTabvUrtmb1_siLD-pmLwpXHiG3T7AAUkwr07xpOhBbqCZeV4fqx7E/exec/exec';
+    const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxWE5GsJqR05MTabvUrtmb1_siLD-pmLwpXHiG3T7AAUkwr07xpOhBbqCZeV4fqx7E/exec';
 
     // Mobile menu
     document.getElementById('hamburger')?.addEventListener('click', () => {
@@ -130,49 +130,18 @@
       btn.textContent = 'מחפש...';
       btn.disabled = true;
 
-      // טוען את כל התורים ומחפש את השם
-      const cb = 'ma' + Date.now();
-      const url = WEBAPP_URL + '?action=load&callback=' + cb;
-      window[cb] = (rows) => {
-        delete window[cb];
-        document.getElementById(cb)?.remove();
+      const cb = 'lc' + Date.now();
+      const url = WEBAPP_URL + '?action=lookupClient&callback=' + cb + '&phone=' + encodeURIComponent(phone);
+      window[cb] = (data) => {
+        delete window[cb]; document.getElementById(cb)?.remove();
         btn.textContent = 'התחברי ←';
         btn.disabled = false;
-        
-        const norm = p => p.replace(/\D/g, '');
-        const normalizedPhone = norm(phone);
-        
-        // מחפש תור עם מספר הטלפון הזה כדי למצוא את השם
-        let clientName = null;
-        if (Array.isArray(rows) && rows.length > 0) {
-          console.log('דוגמה לשורה ראשונה:', rows[0]);
-          console.log('כל השדות:', Object.keys(rows[0]));
-          
-          for (let r of rows) {
-            // נסה כמה אפשרויות לשדה הטלפון
-            let p = String(r['טלפון'] || r['phone'] || r['Phone'] || r['מספר טלפון'] || '');
-            if (p && !p.startsWith('0') && !p.startsWith('+') && p.length <= 9) p = '0' + p;
-            if (norm(p) === normalizedPhone) {
-              // נסה כמה אפשרויות לשדה השם
-              clientName = String(r['שם לקוחה'] || r['שם'] || r['name'] || r['Name'] || r['שם מלא'] || r['לקוח'] || '').trim();
-              console.log('מצאתי תור תואם! כל השדות:', r);
-              console.log('מצאתי שם:', clientName);
-              if (clientName) {
-                console.log('מצאתי שם:', clientName);
-                break;
-              }
-            }
-          }
-        }
-        
-        console.log('שם סופי:', clientName);
-        const client = { name: clientName, phone };
+        const client = { name: data && data.name ? data.name : null, phone };
         localStorage.setItem('clientSession', JSON.stringify(client));
         showAppointments(client);
       };
       const s = document.createElement('script');
-      s.id = cb;
-      s.src = url;
+      s.id = cb; s.src = url;
       s.onerror = () => {
         delete window[cb];
         btn.textContent = 'התחברי ←';

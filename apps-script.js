@@ -296,7 +296,12 @@ function saveAppointment(data) {
 
 function saveClient(name, phone) {
   const sheet = getClientsSheet();
-  const normalizePhone = (p) => String(p).replace(/\D/g, '');
+  const normalizePhone = (p) => {
+    let n = String(p).replace(/\D/g, '');
+    if (n.startsWith('972')) n = '0' + n.slice(3);
+    if (!n.startsWith('0')) n = '0' + n;
+    return n;
+  };
   const normalized = normalizePhone(phone);
   if (sheet.getLastRow() > 1) {
     const phones = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).getValues().flat();
