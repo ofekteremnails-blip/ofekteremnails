@@ -248,6 +248,13 @@ const STATUS_COLORS = { pending: '#f0a500', confirmed: '#25D366', completed: '#8
 
 function emptyMsg(txt) { return `<p class="empty-msg">${txt}</p>`; }
 
+function toWAPhone(phone) {
+  let p = String(phone || '').replace(/\D/g, '');
+  if (p.startsWith('972')) return p;
+  if (p.startsWith('0')) return '972' + p.slice(1);
+  return '972' + p;
+}
+
 function apptCard(appt, showDate = false) {
   const dateLabel = showDate ? `<div class="appt-date">${sanitize(formatDate(appt.date))}</div>` : '';
   const statusBg = { pending: '#fff8e6', confirmed: '#e8f8ef', completed: '#f5f5f5', cancelled: '#fff0f0' };
@@ -361,10 +368,7 @@ function renderReminders(tomorrowAppts) {
 
 אופק`;
     
-    let clientPhone = appt.clientPhone.replace(/\D/g, '');
-    if (clientPhone.startsWith('0')) clientPhone = '972' + clientPhone.slice(1);
-    
-    const waLink = `https://wa.me/${clientPhone}?text=${encodeURIComponent(message)}`;
+    const waLink = `https://wa.me/${toWAPhone(appt.clientPhone)}?text=${encodeURIComponent(message)}`;
     
     return `
       <div class="appt-card status-${sanitize(appt.status)}" style="border-right-color:#25D366">
@@ -437,10 +441,7 @@ function renderMaintenanceReminders(allAppts) {
 
 אופק`;
     
-    let clientPhone = appt.clientPhone.replace(/\D/g, '');
-    if (clientPhone.startsWith('0')) clientPhone = '972' + clientPhone.slice(1);
-    
-    const waLink = `https://wa.me/${clientPhone}?text=${encodeURIComponent(message)}`;
+    const waLink = `https://wa.me/${toWAPhone(appt.clientPhone)}?text=${encodeURIComponent(message)}`;
     
     return `
       <div class="appt-card" style="border-right-color:#ff9800">
@@ -566,9 +567,8 @@ function updateStatus(id, status) {
 
 function sendConfirmationWA(appt) {
   const msg = `היי ${appt.clientName}! 💅✨\nהתור שלך אושר!\n\n📅 ${formatDate(appt.date)}\n🕐 ${appt.time}\n💅 ${appt.serviceName}\n\nמחכה לך! 🌸`;
-  let phone = appt.clientPhone.replace(/\D/g, '');
-  if (phone.startsWith('0')) phone = '972' + phone.slice(1);
-  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  let phone = appt.clientPhone;
+  window.open(`https://wa.me/${toWAPhone(phone)}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 function deleteAppt(id) {
@@ -592,9 +592,7 @@ function sendReminderWA(id) {
   const appt = getAppointments().find(a => a.id === id);
   if (!appt) return;
   const msg = `היי ${appt.clientName}! 💅\nתזכורת לתור שלך:\n✨ ${appt.serviceName}\n📅 ${formatDate(appt.date)}\n🕐 ${appt.time}\nמחכה לך! 🌸`;
-  let phone = appt.clientPhone.replace(/\D/g, '');
-  if (phone.startsWith('0')) phone = '972' + phone.slice(1);
-  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  window.open(`https://wa.me/${toWAPhone(appt.clientPhone)}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 function updateStatusInSheets(id, status) {
@@ -912,10 +910,8 @@ function notifyWaitlist(waitlistId, date) {
 
 אופק`;
     
-    let phone = item.phone.replace(/\D/g, '');
-    if (phone.startsWith('0')) phone = '972' + phone.slice(1);
-    
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+    let phone = item.phone;
+    window.open(`https://wa.me/${toWAPhone(phone)}?text=${encodeURIComponent(message)}`, '_blank');
   });
 }
 
@@ -1359,8 +1355,14 @@ function _displayClients(clients) {
     const normPhone = (p) => String(p || '').replace(/\D/g, '');
     const clientAppts = appts.filter(a => normPhone(a.clientPhone) === normPhone(c.phone) && a.status !== 'cancelled');
     const lastAppt = clientAppts.sort((a,b) => b.date.localeCompare(a.date))[0];
-    let displayPhone = String(c.phone || '');
-    if (displayPhone && !displayPhone.startsWith('0') && !displayPhone.startsWith('+')) displayPhone = '0' + displayPhone;
+    let displayPhone = String(c.phone || '').replace(/\D/g, '');
+    if (displayPhone && !displayPhone.startsWith('972')) {
+      if (displayPhone.startsWith('0')) displayPhone = displayPhone;
+      else displayPhone = '0' + displayPhone;
+    } else if (displayPhone.startsWith('972')) {
+      displayPhone = '0' + displayPhone.slice(3);
+    }
+    const waPhone = displayPhone.replace(/\D/g, '').replace(/^0/, '972');
     return `
       <div class="client-card">
         <div class="client-avatar">${c.name.charAt(0)}</div>
@@ -1372,7 +1374,7 @@ function _displayClients(clients) {
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button onclick="viewClientGallery('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn" style="background:#e8f0ff;color:#1a5a9e;font-size:12px;padding:8px 12px">🖼️</button>
           <button onclick="editClient('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn" style="background:#e8f8ef;color:#1a9e4a;font-size:12px;padding:8px 12px">✏️</button>
-          <a href="https://wa.me/${String(c.phone||'').replace(/\D/g,'')}" target="_blank" class="act-btn wa" style="font-size:12px;padding:8px 12px">💬</a>
+          <a href="https://wa.me/${waPhone}" target="_blank" class="act-btn wa" style="font-size:12px;padding:8px 12px">💬</a>
           <button onclick="deleteClient('${sanitize(c.phone)}')" class="act-btn del" style="font-size:12px;padding:8px 12px">🗑</button>
         </div>
       </div>`;
