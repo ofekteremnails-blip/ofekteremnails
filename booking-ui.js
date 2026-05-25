@@ -286,7 +286,13 @@ function showStep(n) {
 function bindSteps() {
   document.getElementById('toStep2').addEventListener('click', () => { showStep(2); renderCalendar(); });
   document.getElementById('toStep1Back').addEventListener('click', () => showStep(1));
-  document.getElementById('toStep3').addEventListener('click', () => { showStep(3); renderSlots(); });
+  document.getElementById('toStep3').addEventListener('click', () => {
+    showStep(3);
+    const grid = document.getElementById('slotsGrid');
+    grid.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px">טוען שעות פנויות...</p>';
+    document.getElementById('toStep4').disabled = true;
+    loadFromSheets().finally(() => renderSlots());
+  });
   document.getElementById('toStep2Back').addEventListener('click', () => showStep(2));
   document.getElementById('toStep4').addEventListener('click', () => { showStep(4); renderSummaryMini(); prefillClientDetails(); });
   document.getElementById('toStep3Back').addEventListener('click', () => showStep(3));
