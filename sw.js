@@ -1,5 +1,12 @@
-﻿const CACHE = 'lr-nails-v4';
+const CACHE = 'lr-nails-v4';
 const ASSETS = ['/', '/booking.html', '/admin.html', '/booking.js', '/booking-ui.js', '/admin-ui.js', '/booking.css', '/style.css'];
+
+const ALLOWED_ORIGINS = [
+  'https://ofekteremnailss.vercel.app',
+  'https://script.google.com',
+  'https://fonts.googleapis.com',
+  'https://fonts.gstatic.com'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS).catch(() => {})));
@@ -14,6 +21,9 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  const origin = self.location.origin;
+  const url = e.request.url;
+  if (!ALLOWED_ORIGINS.concat(origin).some(o => url.startsWith(o))) return;
   e.respondWith(
     fetch(e.request).catch(() => caches.match(e.request))
   );
@@ -24,8 +34,8 @@ self.addEventListener('push', e => {
   e.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: '/Screenshot 2026-03-27 122808.png',
-      badge: '/Screenshot 2026-03-27 122808.png',
+      icon: '/logo.png',
+      badge: '/logo.png',
       vibrate: [200, 100, 200],
       data: { url: '/booking.html' }
     })
@@ -36,4 +46,3 @@ self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(clients.openWindow(e.notification.data?.url ?? '/'));
 });
-

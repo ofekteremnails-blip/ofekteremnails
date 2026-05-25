@@ -521,8 +521,7 @@ function submitWaitlist() {
   const totalDuration = selected.services.reduce((sum, s) => sum + s.duration, 0);
   const servicesNames = selected.services.map(s => s.name).join(', ');
 
-  const cb = 'wl' + Date.now();
-  const url = WEBAPP_URL + '?action=addWaitlist&callback=' + cb
+  const url = WEBAPP_URL + '?action=addWaitlist'
     + '&date='     + encodeURIComponent(selected.date)
     + '&name='     + encodeURIComponent(name)
     + '&phone='    + encodeURIComponent(phone)
@@ -531,22 +530,18 @@ function submitWaitlist() {
     + '&status=waiting'
     + '&createdAt='+ encodeURIComponent(new Date().toISOString());
 
-  window[cb] = () => {
-    delete window[cb]; document.getElementById(cb)?.remove();
-    offer.innerHTML = `
-      <div style="background:#e8f8ef;border-radius:12px;padding:16px;text-align:center">
-        <div style="font-size:32px;margin-bottom:8px">✅</div>
-        <p style="color:#1a6e3a;font-weight:700;font-size:15px">נרשמת לרשימת המתנה!</p>
-        <p style="color:#555;font-size:13px;margin-top:4px">נשלח לך הודעת WhatsApp אם יתפנה מקום ביום זה 💅</p>
-      </div>`;
-  };
-  const s = document.createElement('script');
-  s.id = cb; s.src = url;
-  s.onerror = () => {
-    delete window[cb];
-    offer.innerHTML = '<p style="color:#e05;font-size:13px">שגיאה בהרשמה, נסי שוב</p>';
-  };
-  document.body.appendChild(s);
+  fetch(url, { mode: 'no-cors' })
+    .then(() => {
+      offer.innerHTML = `
+        <div style="background:#e8f8ef;border-radius:12px;padding:16px;text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">✅</div>
+          <p style="color:#1a6e3a;font-weight:700;font-size:15px">נרשמת לרשימת המתנה!</p>
+          <p style="color:#555;font-size:13px;margin-top:4px">נשלח לך הודעת WhatsApp אם יתפנה מקום ביום זה 💅</p>
+        </div>`;
+    })
+    .catch(() => {
+      offer.innerHTML = '<p style="color:#e05;font-size:13px">שגיאה בהרשמה, נסי שוב</p>';
+    });
 }
 
 // ── STEP 4: SUMMARY + FORM ──

@@ -204,20 +204,38 @@ function showConfirmDialog(msg, onConfirm) {
     overlay = document.createElement('div');
     overlay.id = 'confirmDialog';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
-    overlay.innerHTML = `
-      <div style="background:#fff;border-radius:20px;padding:32px 28px;max-width:320px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-        <p id="confirmDialogMsg" style="font-size:16px;color:#1e1118;margin-bottom:24px;line-height:1.6;"></p>
-        <div style="display:flex;gap:12px;justify-content:center;">
-          <button id="confirmDialogNo" style="padding:10px 24px;border:2px solid #e0e0e0;border-radius:20px;background:none;cursor:pointer;font-family:Heebo,sans-serif;font-size:14px;color:#888;">בטל</button>
-          <button id="confirmDialogYes" style="padding:10px 24px;border:none;border-radius:20px;background:#e05;color:#fff;cursor:pointer;font-family:Heebo,sans-serif;font-size:14px;font-weight:700;">מחק</button>
-        </div>
-      </div>`;
+
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border-radius:20px;padding:32px 28px;max-width:320px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+
+    const msgEl = document.createElement('p');
+    msgEl.id = 'confirmDialogMsg';
+    msgEl.style.cssText = 'font-size:16px;color:#1e1118;margin-bottom:24px;line-height:1.6;';
+
+    const btns = document.createElement('div');
+    btns.style.cssText = 'display:flex;gap:12px;justify-content:center;';
+
+    const noBtn = document.createElement('button');
+    noBtn.id = 'confirmDialogNo';
+    noBtn.style.cssText = 'padding:10px 24px;border:2px solid #e0e0e0;border-radius:20px;background:none;cursor:pointer;font-family:Heebo,sans-serif;font-size:14px;color:#888;';
+    noBtn.textContent = 'בטל';
+
+    const yesBtn = document.createElement('button');
+    yesBtn.id = 'confirmDialogYes';
+    yesBtn.style.cssText = 'padding:10px 24px;border:none;border-radius:20px;background:#e05;color:#fff;cursor:pointer;font-family:Heebo,sans-serif;font-size:14px;font-weight:700;';
+    yesBtn.textContent = 'מחק';
+
+    btns.appendChild(noBtn);
+    btns.appendChild(yesBtn);
+    box.appendChild(msgEl);
+    box.appendChild(btns);
+    overlay.appendChild(box);
     document.body.appendChild(overlay);
   }
   document.getElementById('confirmDialogMsg').textContent = msg;
   overlay.style.display = 'flex';
   document.getElementById('confirmDialogYes').onclick = () => { overlay.style.display = 'none'; onConfirm(); };
-  document.getElementById('confirmDialogNo').onclick = () => { overlay.style.display = 'none'; };
+  document.getElementById('confirmDialogNo').onclick  = () => { overlay.style.display = 'none'; };
 }
 
 // ── HELPERS ──
