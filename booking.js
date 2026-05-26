@@ -359,13 +359,15 @@ function getAvailableSlots(dateStr, durationMins) {
     }
   }
 
-  // תורים קיימים
-  const bookedIntervals = getAppointments()
-    .filter(a => a.date === dateStr && a.status !== 'cancelled')
-    .map(a => ({
-      start: toMinutes(a.time),
-      end:   toMinutes(a.time) + (Number(a.duration) || 60)
-    }));
+  // תורים קיימים + שעות חסומות
+  const bookedIntervals = [
+    ...getAppointments()
+      .filter(a => a.date === dateStr && a.status !== 'cancelled')
+      .map(a => ({ start: toMinutes(a.time), end: toMinutes(a.time) + (Number(a.duration) || 60) })),
+    ...(settings.blockedHours || [])
+      .filter(b => b.date === dateStr)
+      .map(b => ({ start: toMinutes(b.start), end: toMinutes(b.end) }))
+  ];
 
   const freeIntervals = getFreeIntervals(workIntervals, bookedIntervals);
 

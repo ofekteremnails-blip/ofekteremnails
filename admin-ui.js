@@ -1040,6 +1040,7 @@ function renderSettings() {
   });
 
   renderBlockedDates();
+  renderBlockedHours();
   renderCustomHours();
   renderVacations();
 
@@ -1051,6 +1052,27 @@ function renderSettings() {
     document.getElementById('blockDateInput').value = '';
     renderBlockedDates();
   };
+
+  const addBlockHourBtn = document.getElementById('addBlockHour');
+  if (addBlockHourBtn && !addBlockHourBtn._bound) {
+    addBlockHourBtn._bound = true;
+    addBlockHourBtn.addEventListener('click', () => {
+      const date  = document.getElementById('blockHourDate').value;
+      const start = document.getElementById('blockHourStart').value;
+      const end   = document.getElementById('blockHourEnd').value;
+      if (!date || !start || !end) { showToast('אנא מלאי את כל השדות', '#e05'); return; }
+      if (start >= end) { showToast('שעת הסיום חייבת להיות אחרי שעת ההתחלה', '#e05'); return; }
+      const s = getSettings();
+      if (!s.blockedHours) s.blockedHours = [];
+      s.blockedHours.push({ date, start, end });
+      saveSettings(s);
+      document.getElementById('blockHourDate').value = '';
+      document.getElementById('blockHourStart').value = '';
+      document.getElementById('blockHourEnd').value = '';
+      renderBlockedHours();
+      showToast(`✅ שעות ${start}–${end} נחסמו ב-${formatDate(date)}`);
+    });
+  }
 
   document.getElementById('addCustomHour').onclick = () => {
     const date = document.getElementById('customHourDate').value;
@@ -1085,6 +1107,28 @@ function populateServiceDropdown() {
   
   select.innerHTML = '<option value="">בחרי שירות...</option>' + 
     services.map(s => `<option value="${s.id}">${s.icon} ${sanitize(s.name)} (${s.duration} דק')</option>`).join('');
+}
+
+function renderBlockedHours() {
+  const settings = getSettings();
+  const list = document.getElementById('blockedHoursList');
+  if (!list) return;
+  const items = (settings.blockedHours || []).sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+  list.innerHTML = items.length
+    ? items.map((b, idx) => `
+        <div class="blocked-tag" style="background:#fff0f0;border-color:#e05;color:#c00">
+          <span>${formatDate(b.date)} &nbsp;<strong style="color:#e05">${b.start}–${b.end}</strong></span>
+          <button onclick="removeBlockedHour(${idx})" style="color:#c00">✕</button>
+        </div>`).join('')
+    : '<p style="color:#aaa;font-size:13px">אין שעות חסומות</p>';
+}
+
+function removeBlockedHour(idx) {
+  const s = getSettings();
+  if (!s.blockedHours) return;
+  s.blockedHours.splice(idx, 1);
+  saveSettings(s);
+  renderBlockedHours();
 }
 
 function renderBlockedDates() {

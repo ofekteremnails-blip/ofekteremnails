@@ -485,7 +485,19 @@
         </div>
 
         <div class="settings-card">
-          <h3 class="settings-card-title">תאריכים חסומים</h3>
+          <h3 class="settings-card-title">⏰ חסימת שעות בתאריך ספציפי</h3>
+          <p style="font-size:13px;color:#aaa;margin-bottom:14px">חסומי טווח שעות ביום מסוים — לקוחות לא יוכלו לקבוע תורים בזמן זה</p>
+          <div class="custom-hours-add-row">
+            <input type="date" id="blockHourDate" class="field-input"/>
+            <input type="time" id="blockHourStart" class="field-input"/>
+            <span style="color:#aaa;align-self:center">עד</span>
+            <input type="time" id="blockHourEnd" class="field-input"/>
+            <button class="btn-primary" id="addBlockHour">+ חסום</button>
+          </div>
+          <div id="blockedHoursList" class="blocked-list" style="margin-top:12px"></div>
+        </div>
+
+        <div class="settings-card">
           <div class="block-date-row">
             <input type="date" id="blockDateInput" class="field-input"/>
             <button class="btn-primary" id="addBlockDate">+ חסום</button>
