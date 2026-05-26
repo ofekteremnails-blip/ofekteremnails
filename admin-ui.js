@@ -733,22 +733,35 @@ function openAddApptModal(dateStr) {
   modal.style.display = 'flex';
   document.getElementById('addApptDate').value = dateStr || todayStr();
   document.getElementById('addApptTime').value = '';
+  document.getElementById('addApptTimeEnd').value = '';
   document.getElementById('addApptName').value = '';
   document.getElementById('addApptPhone').value = '';
   document.getElementById('addApptNotes').value = '';
   const services = getServices();
   const svcSelect = document.getElementById('addApptService');
   svcSelect.innerHTML = services.map(s => `<option value="${s.id}">${s.icon} ${sanitize(s.name)} (${s.duration}דק')</option>`).join('');
-  // טען שעות פנויות בכל שינוי תאריך או שירות
   svcSelect.onchange = () => _loadAdminSlots();
   document.getElementById('addApptDate').onchange = () => _loadAdminSlots();
+  // כשמשנים שעת התחלה ידנית - חשב שעת סיום אוטומטית לפי משך השירות
+  document.getElementById('addApptTime').oninput = () => _autoFillEndTime();
   _loadAdminSlots();
+}
+
+function _autoFillEndTime() {
+  const startVal = document.getElementById('addApptTime').value;
+  const svcId = document.getElementById('addApptService').value;
+  if (!startVal || !svcId) return;
+  const svc = getServices().find(s => s.id === svcId);
+  if (!svc) return;
+  const [h, m] = startVal.split(':').map(Number);
+  const endMin = h * 60 + m + Number(svc.duration);
+  document.getElementById('addApptTimeEnd').value =
+    `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
 }
 
 function _loadAdminSlots() {
   const dateStr = document.getElementById('addApptDate').value;
   const svcId   = document.getElementById('addApptService').value;
-  const timeInput = document.getElementById('addApptTime');
   const slotsWrap = document.getElementById('addApptSlotsWrap');
   if (!dateStr || !svcId) return;
 
@@ -757,7 +770,6 @@ function _loadAdminSlots() {
 
   slotsWrap.innerHTML = '<p style="font-size:12px;color:#aaa;margin:6px 0">טוען שעות פנויות...</p>';
 
-  // טען תורים עדכניים מ-Sheets ואז חשב slots
   loadFromSheets().finally(() => {
     const slots = getAvailableSlots(dateStr, svc.duration);
     if (slots.length === 0) {
@@ -773,6 +785,7 @@ function _loadAdminSlots() {
 
 function _pickAdminSlot(time, el) {
   document.getElementById('addApptTime').value = time;
+  _autoFillEndTime();
   document.querySelectorAll('#addApptSlotsWrap button').forEach(b => {
     b.style.background = '#fff';
     b.style.color = '#333';
@@ -788,18 +801,27 @@ function closeAddApptModal() {
 }
 
 function submitAddAppt() {
-  const date  = document.getElementById('addApptDate').value;
-  const time  = document.getElementById('addApptTime').value;
-  const name  = document.getElementById('addApptName').value.trim();
-  const phone = document.getElementById('addApptPhone').value.trim();
-  const notes = document.getElementById('addApptNotes').value.trim();
-  const svcId = document.getElementById('addApptService').value;
+  const date    = document.getElementById('addApptDate').value;
+  const time    = document.getElementById('addApptTime').value;
+  const timeEnd = document.getElementById('addApptTimeEnd').value;
+  const name    = document.getElementById('addApptName').value.trim();
+  const phone   = document.getElementById('addApptPhone').value.trim();
+  const notes   = document.getElementById('addApptNotes').value.trim();
+  const svcId   = document.getElementById('addApptService').value;
   if (!date || !time || !name || !phone) { showToast('אנא מלאי את כל השדות', '#e05'); return; }
+  if (timeEnd && timeEnd <= time) { showToast('שעת הסיום חייבת להיות אחרי שעת ההתחלה', '#e05'); return; }
   const services = getServices();
   const svc = services.find(s => s.id === svcId) || services[0];
   if (!svc) { showToast('אנא הגדירי שירות', '#e05'); return; }
+  // חשב משך בפועל לפי שעת סיום ידנית אם הוזנה
+  let duration = svc.duration;
+  if (timeEnd) {
+    const [sh, sm] = time.split(':').map(Number);
+    const [eh, em] = timeEnd.split(':').map(Number);
+    duration = (eh * 60 + em) - (sh * 60 + sm);
+  }
   const id = generateId();
-  const appt = { id, serviceName: svc.name, serviceIcon: svc.icon, duration: svc.duration, date, time, clientName: name, clientPhone: phone, notes, status: 'confirmed' };
+  const appt = { id, serviceName: svc.name, serviceIcon: svc.icon, duration, date, time, clientName: name, clientPhone: phone, notes, status: 'confirmed' };
   const appts = getAppointments();
   appts.push(appt);
   saveAppointments(appts);

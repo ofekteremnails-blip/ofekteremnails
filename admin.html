@@ -280,7 +280,11 @@
           </div>
           <div class="form-field">
             <label>שעה</label>
-            <input type="time" id="addApptTime" class="field-input"/>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="time" id="addApptTime" class="field-input" style="flex:1" placeholder="משעה"/>
+              <span style="color:#aaa;font-size:13px;white-space:nowrap">עד</span>
+              <input type="time" id="addApptTimeEnd" class="field-input" style="flex:1" placeholder="עד שעה"/>
+            </div>
             <div id="addApptSlotsWrap"></div>
           </div>
           <div class="form-field">
