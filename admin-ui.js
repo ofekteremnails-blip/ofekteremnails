@@ -805,10 +805,54 @@ function submitAddAppt() {
   saveAppointments(appts);
   saveToSheets(appt);
   closeAddApptModal();
-  showToast('✅ תור נוסף בהצלחה!');
   adminSelectedDate = date;
   if (calView === 'week') renderWeekView();
   else { renderAdminCalendar(); adminSelectDay(date); }
+  _showApptConfirmPopup(appt);
+}
+
+function _showApptConfirmPopup(appt) {
+  // הסר פופאפ קודם אם קיים
+  document.getElementById('apptConfirmPopup')?.remove();
+
+  const msg = `היי ${appt.clientName}! 💅✨
+קבעתי לך תור:
+
+✨ ${appt.serviceName}
+📅 ${formatDate(appt.date)}
+🕐 ${appt.time}
+
+מחכה לך! 🌸`;
+  const waLink = `https://wa.me/${toWAPhone(appt.clientPhone)}?text=${encodeURIComponent(msg)}`;
+
+  const popup = document.createElement('div');
+  popup.id = 'apptConfirmPopup';
+  popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px';
+  popup.innerHTML = `
+    <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center">
+      <div style="font-size:40px;margin-bottom:12px">✅</div>
+      <h3 style="font-family:'DM Serif Display',serif;color:var(--dark);margin-bottom:6px;font-size:20px">תור נקבע בהצלחה!</h3>
+      <div style="background:#fdf0f5;border-radius:12px;padding:14px;margin:16px 0;text-align:right">
+        <div style="font-size:14px;color:var(--dark);line-height:1.8">
+          <div>👤 <strong>${sanitize(appt.clientName)}</strong></div>
+          <div>📱 ${sanitize(appt.clientPhone)}</div>
+          <div>💅 ${sanitize(appt.serviceName)}</div>
+          <div>📅 ${sanitize(formatDate(appt.date))}</div>
+          <div>🕐 ${sanitize(appt.time)}</div>
+          ${appt.notes ? `<div>📝 ${sanitize(appt.notes)}</div>` : ''}
+        </div>
+      </div>
+      <a href="${waLink}" target="_blank"
+        style="display:block;width:100%;padding:14px;background:#25D366;color:#fff;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
+        💬 שלח אישור ב-WhatsApp
+      </a>
+      <button onclick="document.getElementById('apptConfirmPopup').remove()"
+        style="width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:12px;background:none;cursor:pointer;font-family:Heebo,sans-serif;font-size:14px;color:#888">
+        סגור
+      </button>
+    </div>
+  `;
+  document.body.appendChild(popup);
 }
 
 function toggleBlockDay(dateStr) {
