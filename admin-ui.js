@@ -1729,12 +1729,40 @@ function _displayClients(clients) {
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button onclick="viewClientGallery('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn" style="background:#e8f0ff;color:#1a5a9e;font-size:12px;padding:8px 12px">🖼️</button>
           <button onclick="editClient('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn" style="background:#e8f8ef;color:#1a9e4a;font-size:12px;padding:8px 12px">✏️</button>
-          <a href="https://wa.me/${waPhone}" target="_blank" class="act-btn wa" style="font-size:12px;padding:8px 12px" title="נקבע לך תור">💬 נקבע תור</a>
+          <a href="javascript:void(0)" onclick="sendBookingConfirmWAClient('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn wa" style="font-size:12px;padding:8px 12px" title="נקבע לך תור">💬 נקבע תור</a>
           <button onclick="sendReminderWAClient('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn wa" style="font-size:12px;padding:8px 12px;background:#ff9800" title="תזכורת לתור">🔔 תזכורת</button>
           <button onclick="deleteClient('${sanitize(c.phone)}')" class="act-btn del" style="font-size:12px;padding:8px 12px">🗑</button>
         </div>
       </div>`;
   }).join('');
+}
+
+function sendBookingConfirmWAClient(phone, name) {
+  const norm = (p) => String(p || '').replace(/\D/g, '');
+  const today = todayStr();
+  const nextAppt = getAppointments()
+    .filter(a => norm(a.clientPhone) === norm(phone) && a.date >= today && a.status !== 'cancelled')
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
+
+  let msg;
+  if (nextAppt) {
+    msg = `היי ${name}! 💅✨
+
+נקבע לך תור:
+
+✨ ${nextAppt.serviceName}
+📅 ${formatDate(nextAppt.date)}
+🕐 ${nextAppt.time}
+
+מחכה לך! 🌸`;
+  } else {
+    msg = `היי ${name}! 💅✨
+
+נקבע לך תור חדש!
+
+מחכה לך! 🌸`;
+  }
+  window.open(`https://wa.me/${toWAPhone(phone)}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 function sendReminderWAClient(phone, name) {
