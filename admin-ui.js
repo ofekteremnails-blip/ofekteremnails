@@ -737,7 +737,50 @@ function openAddApptModal(dateStr) {
   document.getElementById('addApptPhone').value = '';
   document.getElementById('addApptNotes').value = '';
   const services = getServices();
-  document.getElementById('addApptService').innerHTML = services.map(s => `<option value="${s.id}">${s.icon} ${sanitize(s.name)} (${s.duration}דק')</option>`).join('');
+  const svcSelect = document.getElementById('addApptService');
+  svcSelect.innerHTML = services.map(s => `<option value="${s.id}">${s.icon} ${sanitize(s.name)} (${s.duration}דק')</option>`).join('');
+  // טען שעות פנויות בכל שינוי תאריך או שירות
+  svcSelect.onchange = () => _loadAdminSlots();
+  document.getElementById('addApptDate').onchange = () => _loadAdminSlots();
+  _loadAdminSlots();
+}
+
+function _loadAdminSlots() {
+  const dateStr = document.getElementById('addApptDate').value;
+  const svcId   = document.getElementById('addApptService').value;
+  const timeInput = document.getElementById('addApptTime');
+  const slotsWrap = document.getElementById('addApptSlotsWrap');
+  if (!dateStr || !svcId) return;
+
+  const svc = getServices().find(s => s.id === svcId);
+  if (!svc) return;
+
+  slotsWrap.innerHTML = '<p style="font-size:12px;color:#aaa;margin:6px 0">טוען שעות פנויות...</p>';
+
+  // טען תורים עדכניים מ-Sheets ואז חשב slots
+  loadFromSheets().finally(() => {
+    const slots = getAvailableSlots(dateStr, svc.duration);
+    if (slots.length === 0) {
+      slotsWrap.innerHTML = '<p style="font-size:12px;color:#e05;margin:6px 0">🔴 אין שעות פנויות ביום זה</p>';
+      return;
+    }
+    slotsWrap.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">' +
+      slots.map(t =>
+        `<button type="button" onclick="_pickAdminSlot('${t}', this)" style="padding:6px 12px;border:1.5px solid #e0c8d0;border-radius:20px;background:#fff;cursor:pointer;font-size:13px;font-family:inherit">${t}</button>`
+      ).join('') + '</div>';
+  });
+}
+
+function _pickAdminSlot(time, el) {
+  document.getElementById('addApptTime').value = time;
+  document.querySelectorAll('#addApptSlotsWrap button').forEach(b => {
+    b.style.background = '#fff';
+    b.style.color = '#333';
+    b.style.borderColor = '#e0c8d0';
+  });
+  el.style.background = 'var(--dark-pink)';
+  el.style.color = '#fff';
+  el.style.borderColor = 'var(--dark-pink)';
 }
 
 function closeAddApptModal() {
