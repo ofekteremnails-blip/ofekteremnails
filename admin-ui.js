@@ -349,7 +349,10 @@ function _renderDashboard() {
   // כל התורים - תמיד מוצג
   const allDashEl = document.getElementById('allApptsDashList');
   if (allDashEl) {
-    const allSorted = [...all].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+    const today2 = todayStr();
+    const future = [...all].filter(a => a.date >= today2).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    const past   = [...all].filter(a => a.date <  today2).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+    const allSorted = [...future, ...past];
     allDashEl.innerHTML = allSorted.length ? allSorted.map(a => apptCard(a, true)).join('') : emptyMsg('אין תורים עדיין');
   }
 }
