@@ -737,41 +737,70 @@ function openAddApptModal(dateStr) {
   document.getElementById('addApptName').value = '';
   document.getElementById('addApptPhone').value = '';
   document.getElementById('addApptNotes').value = '';
+
+  // רנדר checkboxes לשירותים
   const services = getServices();
-  const svcSelect = document.getElementById('addApptService');
-  svcSelect.innerHTML = services.map(s => `<option value="${s.id}">${s.icon} ${sanitize(s.name)} (${s.duration}דק')</option>`).join('');
-  svcSelect.onchange = () => _loadAdminSlots();
+  const wrap = document.getElementById('addApptServicesWrap');
+  wrap.innerHTML = services.map(s => `
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background 0.15s" onmouseover="this.style.background='#f5e8ed'" onmouseout="this.style.background=''">
+      <input type="checkbox" class="appt-svc-cb" value="${s.id}" style="width:18px;height:18px;accent-color:var(--dark-pink);cursor:pointer"/>
+      <span style="font-size:14px">${s.icon} ${sanitize(s.name)}</span>
+      <span style="margin-right:auto;font-size:12px;color:#aaa">${s.duration}דק'${s.price ? ' • ₪' + s.price : ''}</span>
+    </label>
+  `).join('');
+
+  wrap.querySelectorAll('.appt-svc-cb').forEach(cb => cb.addEventListener('change', () => {
+    _updateServicesSummary();
+    _loadAdminSlots();
+  }));
+
   document.getElementById('addApptDate').onchange = () => _loadAdminSlots();
-  // כשמשנים שעת התחלה ידנית - חשב שעת סיום אוטומטית לפי משך השירות
   document.getElementById('addApptTime').oninput = () => _autoFillEndTime();
-  _loadAdminSlots();
+  _updateServicesSummary();
+}
+
+function _getSelectedServices() {
+  const checked = document.querySelectorAll('.appt-svc-cb:checked');
+  const services = getServices();
+  return Array.from(checked).map(cb => services.find(s => s.id === cb.value)).filter(Boolean);
+}
+
+function _getTotalDuration() {
+  return _getSelectedServices().reduce((sum, s) => sum + Number(s.duration), 0);
+}
+
+function _updateServicesSummary() {
+  const selected = _getSelectedServices();
+  const summary = document.getElementById('addApptServicesSummary');
+  if (!summary) return;
+  if (selected.length === 0) { summary.textContent = ''; return; }
+  const totalDur = selected.reduce((s, svc) => s + Number(svc.duration), 0);
+  const totalPrice = selected.reduce((s, svc) => s + (Number(svc.price) || 0), 0);
+  summary.textContent = `סה"כ: ${totalDur} דק'${totalPrice ? ' • ₪' + totalPrice : ''}`;
 }
 
 function _autoFillEndTime() {
   const startVal = document.getElementById('addApptTime').value;
-  const svcId = document.getElementById('addApptService').value;
-  if (!startVal || !svcId) return;
-  const svc = getServices().find(s => s.id === svcId);
-  if (!svc) return;
+  const totalDur = _getTotalDuration();
+  if (!startVal || !totalDur) return;
   const [h, m] = startVal.split(':').map(Number);
-  const endMin = h * 60 + m + Number(svc.duration);
+  const endMin = h * 60 + m + totalDur;
   document.getElementById('addApptTimeEnd').value =
     `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
 }
-
 function _loadAdminSlots() {
   const dateStr = document.getElementById('addApptDate').value;
-  const svcId   = document.getElementById('addApptService').value;
   const slotsWrap = document.getElementById('addApptSlotsWrap');
-  if (!dateStr || !svcId) return;
-
-  const svc = getServices().find(s => s.id === svcId);
-  if (!svc) return;
+  const totalDur = _getTotalDuration();
+  if (!dateStr || !totalDur) {
+    if (slotsWrap) slotsWrap.innerHTML = '';
+    return;
+  }
 
   slotsWrap.innerHTML = '<p style="font-size:12px;color:#aaa;margin:6px 0">טוען שעות פנויות...</p>';
 
   loadFromSheets().finally(() => {
-    const slots = getAvailableSlots(dateStr, svc.duration);
+    const slots = getAvailableSlots(dateStr, totalDur);
     if (slots.length === 0) {
       slotsWrap.innerHTML = '<p style="font-size:12px;color:#e05;margin:6px 0">🔴 אין שעות פנויות ביום זה</p>';
       return;
@@ -787,13 +816,9 @@ function _pickAdminSlot(time, el) {
   document.getElementById('addApptTime').value = time;
   _autoFillEndTime();
   document.querySelectorAll('#addApptSlotsWrap button').forEach(b => {
-    b.style.background = '#fff';
-    b.style.color = '#333';
-    b.style.borderColor = '#e0c8d0';
+    b.style.background = '#fff'; b.style.color = '#333'; b.style.borderColor = '#e0c8d0';
   });
-  el.style.background = 'var(--dark-pink)';
-  el.style.color = '#fff';
-  el.style.borderColor = 'var(--dark-pink)';
+  el.style.background = 'var(--dark-pink)'; el.style.color = '#fff'; el.style.borderColor = 'var(--dark-pink)';
 }
 
 function closeAddApptModal() {
@@ -801,27 +826,33 @@ function closeAddApptModal() {
 }
 
 function submitAddAppt() {
-  const date    = document.getElementById('addApptDate').value;
-  const time    = document.getElementById('addApptTime').value;
-  const timeEnd = document.getElementById('addApptTimeEnd').value;
-  const name    = document.getElementById('addApptName').value.trim();
-  const phone   = document.getElementById('addApptPhone').value.trim();
-  const notes   = document.getElementById('addApptNotes').value.trim();
-  const svcId   = document.getElementById('addApptService').value;
+  const date     = document.getElementById('addApptDate').value;
+  const time     = document.getElementById('addApptTime').value;
+  const timeEnd  = document.getElementById('addApptTimeEnd').value;
+  const name     = document.getElementById('addApptName').value.trim();
+  const phone    = document.getElementById('addApptPhone').value.trim();
+  const notes    = document.getElementById('addApptNotes').value.trim();
+  const selected = _getSelectedServices();
+
   if (!date || !time || !name || !phone) { showToast('אנא מלאי את כל השדות', '#e05'); return; }
+  if (selected.length === 0) { showToast('אנא בחרי שירות אחד לפחות', '#e05'); return; }
   if (timeEnd && timeEnd <= time) { showToast('שעת הסיום חייבת להיות אחרי שעת ההתחלה', '#e05'); return; }
-  const services = getServices();
-  const svc = services.find(s => s.id === svcId) || services[0];
-  if (!svc) { showToast('אנא הגדירי שירות', '#e05'); return; }
-  // חשב משך בפועל לפי שעת סיום ידנית אם הוזנה
-  let duration = svc.duration;
+
+  // חשב משך: אם הוזנה שעת סיום ידנית - קח אותה, אחרת סכום משכי השירותים
+  let duration;
   if (timeEnd) {
     const [sh, sm] = time.split(':').map(Number);
     const [eh, em] = timeEnd.split(':').map(Number);
     duration = (eh * 60 + em) - (sh * 60 + sm);
+  } else {
+    duration = selected.reduce((s, svc) => s + Number(svc.duration), 0);
   }
+
+  const serviceName = selected.map(s => s.name).join(' + ');
+  const serviceIcon = selected[0].icon;
+
   const id = generateId();
-  const appt = { id, serviceName: svc.name, serviceIcon: svc.icon, duration, date, time, clientName: name, clientPhone: phone, notes, status: 'confirmed' };
+  const appt = { id, serviceName, serviceIcon, duration, date, time, clientName: name, clientPhone: phone, notes, status: 'confirmed' };
   const appts = getAppointments();
   appts.push(appt);
   saveAppointments(appts);

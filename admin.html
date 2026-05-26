@@ -279,6 +279,11 @@
             <input type="date" id="addApptDate" class="field-input"/>
           </div>
           <div class="form-field">
+            <label>שירותים</label>
+            <div id="addApptServicesWrap" style="display:flex;flex-direction:column;gap:8px;background:#fdf8fa;border-radius:12px;padding:10px;border:1.5px solid #f0e0e8"></div>
+            <div id="addApptServicesSummary" style="font-size:12px;color:#b76e79;margin-top:6px;font-weight:600"></div>
+          </div>
+          <div class="form-field">
             <label>שעה</label>
             <div style="display:flex;gap:8px;align-items:center">
               <input type="time" id="addApptTime" class="field-input" style="flex:1" placeholder="משעה"/>
@@ -294,10 +299,6 @@
           <div class="form-field">
             <label>טלפון</label>
             <input type="tel" id="addApptPhone" class="field-input" placeholder="05X-XXXXXXX"/>
-          </div>
-          <div class="form-field">
-            <label>שירות</label>
-            <select id="addApptService" class="field-input"></select>
           </div>
           <div class="form-field">
             <label>הערות (אופציונלי)</label>
