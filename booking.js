@@ -322,8 +322,6 @@ function getFreeIntervals(workIntervals, bookedIntervals) {
   return free;
 }
 
-const BREAK_TIME = 10; // דקות מנוחה בין תורים
-
 function getAvailableSlots(dateStr, durationMins) {
   const settings = getSettings();
   const [y, mo, d] = dateStr.split('-').map(Number);
@@ -362,11 +360,12 @@ function getAvailableSlots(dateStr, durationMins) {
   }
 
   // תורים קיימים + מרווח מנוחה
+  const breakTime = Number(settings.breakTime) || 10;
   const bookedIntervals = getAppointments()
     .filter(a => a.date === dateStr && a.status !== 'cancelled')
     .map(a => ({
       start: toMinutes(a.time),
-      end:   toMinutes(a.time) + (Number(a.duration) || 60) + BREAK_TIME
+      end:   toMinutes(a.time) + (Number(a.duration) || 60) + breakTime
     }));
 
   const freeIntervals = getFreeIntervals(workIntervals, bookedIntervals);

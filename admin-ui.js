@@ -899,6 +899,7 @@ const DAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי',
 function renderSettings() {
   const settings = getSettings();
   document.getElementById('waPhoneInput').value = settings.waPhone;
+  document.getElementById('breakTimeInput').value = settings.breakTime !== undefined ? settings.breakTime : 10;
   const lb = settings.lunchBreak || {};
   document.getElementById('lunchBreakStart').value = lb.start || '';
   document.getElementById('lunchBreakEnd').value   = lb.end   || '';
@@ -1583,6 +1584,8 @@ function removeBlockDate(dateStr) {
 function saveSettingsHandler() {
   const settings = getSettings();
   settings.waPhone = document.getElementById('waPhoneInput').value.trim();
+  const breakTimeVal = parseInt(document.getElementById('breakTimeInput').value, 10);
+  if (!isNaN(breakTimeVal) && breakTimeVal >= 0) settings.breakTime = breakTimeVal;
   const lbStart = document.getElementById('lunchBreakStart').value;
   const lbEnd   = document.getElementById('lunchBreakEnd').value;
   if (lbStart && lbEnd) settings.lunchBreak = { start: lbStart, end: lbEnd };
