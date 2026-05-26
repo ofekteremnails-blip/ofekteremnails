@@ -436,7 +436,7 @@
 
 /* ── APP SHELL ── */
 .admin-page { cursor: default; background: var(--cream); }
-.app-shell { display: flex; min-height: 100vh; min-height: 100dvh; }
+.app-shell { display: flex; min-height: 100vh; min-height: 100dvh; padding-top: env(safe-area-inset-top); }
 
 /* ── SIDEBAR ── */
 .sidebar {
@@ -667,10 +667,10 @@
 .client-info a { color: var(--mauve); text-decoration: none; }
 
 /* ── MOBILE TOPBAR ── */
-.mobile-topbar { display: none; align-items: center; gap: 10px; padding: 12px 14px; background: var(--text); position: sticky; top: 0; z-index: 50; }
+.mobile-topbar { display: none; align-items: center; gap: 10px; padding: 12px 14px; padding-top: max(12px, env(safe-area-inset-top)); background: var(--text); position: sticky; top: 0; z-index: 50; }
 .topbar-logo { height: 32px; object-fit: contain; opacity: 0.8; }
 .topbar-title { flex: 1; color: #fff; font-size: 15px; font-weight: 500; font-family: 'DM Sans', sans-serif; }
-.topbar-sync { background: rgba(255,255,255,0.08); border: none; border-radius: 4px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; }
+.topbar-sync { background: rgba(255,255,255,0.08); border: none; border-radius: 4px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; flex-shrink: 0; }
 
 /* ── BOTTOM NAV ── */
 .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #1e1118; border-top: 1px solid rgba(255,255,255,0.08); padding: 8px 0; padding-bottom: max(8px, env(safe-area-inset-bottom)); z-index: 200; }
