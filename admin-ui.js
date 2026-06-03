@@ -869,7 +869,7 @@ function _showApptConfirmPopup(appt) {
   document.getElementById('apptConfirmPopup')?.remove();
 
   const msg = `היי ${appt.clientName}! 💅✨
-קבעתי לך תור:
+אושר לך תור:
 
 ✨ ${appt.serviceName}
 📅 ${formatDate(appt.date)}
@@ -945,9 +945,13 @@ function updateStatus(id, status) {
   const appts = getAppointments();
   const appt = appts.find(a => a.id === id);
   if (!appt) return;
+  const wasConfirmed = appt.status === 'pending' && status === 'confirmed';
   appt.status = status;
   saveAppointments(appts);
   updateStatusInSheets(id, status);
+  if (wasConfirmed) {
+    _showApptConfirmPopup(appt);
+  }
   refreshCurrentPanel();
 }
 
