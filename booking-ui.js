@@ -157,6 +157,7 @@ function loadMyAppointments(phone) {
       }
       let p = String(r['טלפון'] || r.clientPhone || '');
       return {
+        id: String(r['ID'] || r.id || ''),
         serviceName: String(r['שירות'] || r.serviceName || ''),
         date, time,
         status: String(r['סטטוס'] || r.status || ''),
@@ -181,7 +182,7 @@ function loadMyAppointments(phone) {
           <div class="my-appt-datetime">📅 ${sanitize(formatDate(a.date))} · 🕐 ${sanitize(a.time)}</div>
           <div class="my-appt-actions">
             <a href="https://wa.me/${waPhone}?text=${changeMsg}" target="_blank" class="my-appt-btn change">✏️ שינוי תור</a>
-            <a href="https://wa.me/${waPhone}?text=${cancelMsg}" target="_blank" class="my-appt-btn cancel">✕ ביטול</a>
+            <button onclick="cancelApptBooking('${sanitize(a.id)}', this)" class="my-appt-btn cancel">✕ ביטול</button>
           </div>
         </div>`;
     }).join('');
@@ -225,6 +226,27 @@ function loadMyAppointments(phone) {
   const s = document.createElement('script');
   s.id = cb; s.src = url;
   s.onerror = () => { delete window[cb]; };
+  document.body.appendChild(s);
+}
+
+function cancelApptBooking(id, btn) {
+  if (!confirm('בטוחה שתרצי לבטל את התור?')) return;
+  btn.textContent = 'מבטל...';
+  btn.disabled = true;
+  const cb = 'ca' + Date.now();
+  const url = WEBAPP_URL + '?action=updateStatus&callback=' + cb + '&id=' + encodeURIComponent(id) + '&status=cancelled';
+  window[cb] = () => {
+    delete window[cb]; document.getElementById(cb)?.remove();
+    const card = btn.closest('.my-appt-item');
+    if (card) {
+      card.style.opacity = '0.5';
+      card.innerHTML = '<div style="text-align:center;padding:12px;color:#888">✅ התור בוטל בהצלחה</div>';
+      setTimeout(() => { card.remove(); loadMyAppointments(currentClient.phone); }, 2000);
+    }
+  };
+  const s = document.createElement('script');
+  s.id = cb; s.src = url;
+  s.onerror = () => { delete window[cb]; btn.textContent = '✕ ביטול'; btn.disabled = false; alert('שגיאה, נסי שוב'); };
   document.body.appendChild(s);
 }
 
