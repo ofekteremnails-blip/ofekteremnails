@@ -148,7 +148,7 @@ function loadMyAppointments(phone) {
       let time = String(r['שעה'] || r.time || '');
       if (time.includes('T') || time.includes('1899')) {
         const d = new Date(time);
-        time = String(d.getUTCHours()).padStart(2,'0') + ':' + String(d.getUTCMinutes()).padStart(2,'0');
+        time = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
       }
       let date = String(r['תאריך'] || r.date || '');
       if (date.includes('T') || date.includes('Z')) {
@@ -198,15 +198,27 @@ function loadMyAppointments(phone) {
   window[cb] = (rows) => {
     delete window[cb]; document.getElementById(cb)?.remove();
     if (Array.isArray(rows) && rows.length > 0) {
-      saveAppointments(rows.map(r => ({
-        id: String(r['ID'] || ''),
-        serviceName: String(r['שירות'] || ''),
-        date: String(r['תאריך'] || ''),
-        time: String(r['שעה'] || ''),
-        clientPhone: String(r['טלפון'] || ''),
-        status: String(r['סטטוס'] || 'pending'),
-        duration: Number(r['משך'] || 60)
-      })).filter(a => a.id));
+      saveAppointments(rows.map(r => {
+        let time = String(r['שעה'] || '');
+        if (time.includes('T') || time.includes('1899')) {
+          const d = new Date(time);
+          time = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+        }
+        let date = String(r['תאריך'] || '');
+        if (date.includes('T') || date.includes('Z')) {
+          const d = new Date(date);
+          date = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        }
+        return {
+          id: String(r['ID'] || ''),
+          serviceName: String(r['שירות'] || ''),
+          date,
+          time,
+          clientPhone: String(r['טלפון'] || ''),
+          status: String(r['סטטוס'] || 'pending'),
+          duration: Number(r['משך'] || 60)
+        };
+      }).filter(a => a.id));
       renderAppts(rows);
     }
   };
