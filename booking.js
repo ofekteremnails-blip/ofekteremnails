@@ -371,8 +371,8 @@ function getAvailableSlots(dateStr, durationMins) {
 
   const freeIntervals = getFreeIntervals(workIntervals, bookedIntervals);
 
-  // מרווח קבוע לבדיקת זמינות
-  const slotInterval = settings.slotInterval || 15;
+  // מרווח דינמי = משך השירות
+  const slotInterval = durationMins;
   const slots = [];
   freeIntervals.forEach(({ start, end }) => {
     for (let t = start; t + durationMins <= end; t += slotInterval) {
