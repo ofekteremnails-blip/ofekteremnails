@@ -220,6 +220,23 @@
 .cal-cell.available:hover { background: var(--blush); color: var(--deep); }
 .cal-cell.selected { background: var(--deep) !important; color: #fff !important; font-weight: 600; }
 .cal-cell.blocked { background: #fff0f0; color: #cc0033; cursor: not-allowed; }
+.cal-cell.full {
+  background: #fff0f0;
+  color: #cc0033;
+  cursor: pointer;
+  position: relative;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 12px;
+}
+.cal-cell.full:hover { background: #ffe0e0; }
+.cal-full-label {
+  font-size: 8px;
+  font-weight: 700;
+  color: #cc0033;
+  letter-spacing: 0.3px;
+  line-height: 1;
+}
 .cal-dot {
   position: absolute;
   bottom: 3px; left: 50%; transform: translateX(-50%);

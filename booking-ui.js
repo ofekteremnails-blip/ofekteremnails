@@ -403,6 +403,7 @@ function renderCalendar() {
   const firstDay = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const todayStr = todayStrTZ();
+  const totalDuration = selected.services.reduce((sum, s) => sum + s.duration, 0);
 
   let html = '';
   for (let i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
@@ -412,11 +413,19 @@ function renderCalendar() {
     const isWork = isWorkDay(dateStr);
     const isSelected = selected.date === dateStr;
     let cls = 'cal-cell';
-    if (isPast || !isWork) cls += ' disabled';
-    else cls += ' available';
-    if (isSelected) cls += ' selected';
-    const onclick = (!isPast && isWork) ? `onclick="selectDate('${dateStr}')"` : '';
-    html += `<div class="${cls}" ${onclick}>${d}</div>`;
+    if (isPast || !isWork) {
+      cls += ' disabled';
+      html += `<div class="${cls}">${d}</div>`;
+    } else {
+      const slots = getAvailableSlots(dateStr, totalDuration);
+      const isFull = slots.length === 0;
+      cls += isFull ? ' full' : ' available';
+      if (isSelected) cls += ' selected';
+      const onclick = isFull
+        ? `onclick="showFullDayPopup('${dateStr}')"`
+        : `onclick="selectDate('${dateStr}')"`;
+      html += `<div class="${cls}" ${onclick}>${d}${isFull ? '<span class="cal-full-label">מלא</span>' : ''}</div>`;
+    }
   }
   grid.innerHTML = html;
 
@@ -428,6 +437,49 @@ function renderCalendar() {
     calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
     renderCalendar();
   };
+}
+
+function showFullDayPopup(dateStr) {
+  // מצא את התאריך הפנוי הקרוב ביותר
+  const totalDuration = selected.services.reduce((sum, s) => sum + s.duration, 0);
+  let nextFree = null;
+  const search = new Date(dateStr);
+  for (let i = 1; i <= 60; i++) {
+    search.setDate(search.getDate() + 1);
+    const d = search.getFullYear() + '-' + String(search.getMonth()+1).padStart(2,'0') + '-' + String(search.getDate()).padStart(2,'0');
+    if (isWorkDay(d) && getAvailableSlots(d, totalDuration).length > 0) { nextFree = d; break; }
+  }
+
+  let existing = document.getElementById('fullDayPopup');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'fullDayPopup';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:28px 24px;max-width:320px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.18)">
+      <div style="font-size:36px;margin-bottom:10px">📅</div>
+      <p style="font-size:16px;font-weight:600;color:#3d2030;margin-bottom:6px">היום הזה מלא</p>
+      <p style="font-size:13px;color:#888;margin-bottom:20px">${formatDate(dateStr)}</p>
+      ${nextFree
+        ? `<button onclick="jumpToDate('${nextFree}')" style="width:100%;padding:13px;background:#6b4c55;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px">📅 קפצי לתאריך הפנוי</button>
+           <p style="font-size:12px;color:#aaa;margin-bottom:14px">${formatDate(nextFree)}</p>`
+        : `<p style="font-size:13px;color:#cc0033;margin-bottom:20px">לא נמצאו תאריכים פנויים בקרוב</p>`
+      }
+      <button onclick="document.getElementById('fullDayPopup').remove()" style="background:none;border:1px solid #ddd;color:#888;padding:9px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">סגירה</button>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+function jumpToDate(dateStr) {
+  document.getElementById('fullDayPopup')?.remove();
+  const [y, m] = dateStr.split('-').map(Number);
+  calYear = y;
+  calMonth = m - 1;
+  renderCalendar();
+  // המתן לרינדור ואז בחר את התאריך
+  setTimeout(() => selectDate(dateStr), 50);
 }
 
 function selectDate(dateStr) {
