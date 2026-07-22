@@ -819,12 +819,29 @@ function setApptClientMode(mode) {
 }
 
 function filterApptClients(q) {
-  const clients = DB.get('clients_cache', null) || [];
-  const filtered = q
-    ? clients.filter(c => c.name.toLowerCase().includes(q.toLowerCase()) || c.phone.includes(q))
-    : clients.slice(0, 30);
   const list = document.getElementById('addApptClientList');
   if (!list) return;
+
+  const cached = DB.get('clients_cache', null);
+  if (!cached || cached.length === 0) {
+    list.innerHTML = '<p style="padding:10px;color:#aaa;font-size:13px;text-align:center">טוען לקוחות...</p>';
+    loadClientsFromSheets().then(clients => {
+      if (clients && clients.length > 0) {
+        DB.set('clients_cache', clients);
+        _renderApptClientList(q, clients, list);
+      } else {
+        list.innerHTML = '<p style="padding:10px;color:#aaa;font-size:13px;text-align:center">אין לקוחות</p>';
+      }
+    });
+    return;
+  }
+  _renderApptClientList(q, cached, list);
+}
+
+function _renderApptClientList(q, clients, list) {
+  const filtered = q
+    ? clients.filter(c => c.name.toLowerCase().includes(q.toLowerCase()) || String(c.phone).includes(q))
+    : clients.slice(0, 40);
   if (filtered.length === 0) {
     list.innerHTML = '<p style="padding:10px;color:#aaa;font-size:13px;text-align:center">לא נמצאו לקוחות</p>';
     return;
@@ -862,14 +879,7 @@ function openAddApptModal(dateStr) {
   if (document.getElementById('addApptName')) document.getElementById('addApptName').value = '';
   if (document.getElementById('addApptPhone')) document.getElementById('addApptPhone').value = '';
   setApptClientMode('existing');
-  // טען לקוחות אם אין ב-cache
-  if (!DB.get('clients_cache', null)) {
-    loadClientsFromSheets().then(clients => {
-      if (clients && clients.length > 0) { DB.set('clients_cache', clients); filterApptClients(''); }
-    });
-  } else {
-    filterApptClients('');
-  }
+  filterApptClients('');
 
   // רנדר checkboxes לשירותים
   const services = getServices();
