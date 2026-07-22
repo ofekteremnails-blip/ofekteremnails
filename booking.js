@@ -49,6 +49,35 @@ function saveToSheets(appt) {
   document.body.appendChild(s);
 }
 
+function saveToSheetsWithConflictCheck(appt, onDone) {
+  const slim = {
+    id: appt.id, serviceName: appt.serviceName, duration: appt.duration,
+    date: appt.date, time: appt.time, clientName: appt.clientName,
+    clientPhone: appt.clientPhone, notes: appt.notes || '', status: appt.status,
+  };
+  const cb = 'sc' + Date.now();
+  const url = WEBAPP_URL
+    + '?action=save'
+    + '&callback=' + cb
+    + '&id='          + encodeURIComponent(slim.id)
+    + '&serviceName=' + encodeURIComponent(slim.serviceName)
+    + '&duration='    + slim.duration
+    + '&date='        + slim.date
+    + '&time='        + encodeURIComponent(slim.time)
+    + '&clientName='  + encodeURIComponent(slim.clientName)
+    + '&clientPhone=' + encodeURIComponent(slim.clientPhone)
+    + '&notes='       + encodeURIComponent(slim.notes)
+    + '&status='      + slim.status;
+  window[cb] = (res) => {
+    delete window[cb]; document.getElementById(cb)?.remove();
+    onDone(res && res.conflict === true);
+  };
+  const s = document.createElement('script');
+  s.id = cb; s.src = url;
+  s.onerror = () => { delete window[cb]; onDone(false); };
+  document.body.appendChild(s);
+}
+
 // מנסה להסיק משך שירות לפי שם - fallback לתורים ישנים ללא עמודת משך
 function _guessDuration(serviceName) {
   const svc = getServices().find(s => s.name === serviceName);
@@ -322,34 +351,27 @@ function getFreeIntervals(workIntervals, bookedIntervals) {
   return free;
 }
 
-function getAvailableSlots(dateStr, durationMins) {
+function getAvailableSlots(dateStr, durationMins, appointmentsOverride) {
   const settings = getSettings();
   const [y, mo, d] = dateStr.split('-').map(Number);
   const dow = new Date(y, mo - 1, d).getDay();
 
-  // שעות מיוחדות עוקפות הכל - גם חגים וימים חסומים
   const customForDate = (settings.customHours || []).filter(c => c.date === dateStr);
   const hasCustom = customForDate.length > 0;
 
   if (!hasCustom) {
-    // בדוק חג ישראלי
     if (isIsraeliHoliday(dateStr)) return [];
-    // בדוק חסום
     if ((settings.blockedDates || []).includes(dateStr)) return [];
-    // בדוק יום עבודה
     const day = settings.workDays[dow];
     if (!day || !day.active) return [];
   }
 
-  // בנה טווחי עבודה
   let workIntervals;
   if (hasCustom) {
-    // שעות מיוחדות בלבד
     workIntervals = customForDate.map(c => ({ start: toMinutes(c.start), end: toMinutes(c.end) }));
   } else {
     const day = settings.workDays[dow];
     workIntervals = [{ start: toMinutes(day.start), end: toMinutes(day.end) }];
-    // חתוך הפסקת צהריים
     const lb = settings.lunchBreak;
     if (lb && lb.start && lb.end && lb.start > day.start && lb.end < day.end) {
       workIntervals = [
@@ -359,9 +381,10 @@ function getAvailableSlots(dateStr, durationMins) {
     }
   }
 
-  // תורים קיימים + שעות חסומות
+  // השתמש בנתונים שהועברו (מ-Sheets) או fallback ל-localStorage
+  const appts = appointmentsOverride !== undefined ? appointmentsOverride : getAppointments();
   const bookedIntervals = [
-    ...getAppointments()
+    ...appts
       .filter(a => a.date === dateStr && a.status !== 'cancelled')
       .map(a => ({ start: toMinutes(a.time), end: toMinutes(a.time) + (Number(a.duration) || 60) })),
     ...(settings.blockedHours || [])
@@ -370,14 +393,10 @@ function getAvailableSlots(dateStr, durationMins) {
   ];
 
   const freeIntervals = getFreeIntervals(workIntervals, bookedIntervals);
-
-  // מרווח דינמי = משך השירות
-  const slotInterval = durationMins;
   const slots = [];
   freeIntervals.forEach(({ start, end }) => {
-    for (let t = start; t + durationMins <= end; t += slotInterval) {
-      const timeStr = fromMinutes(t);
-      if (!isSlotLocked(dateStr, timeStr)) slots.push(timeStr);
+    for (let t = start; t + durationMins <= end; t += durationMins) {
+      slots.push(fromMinutes(t));
     }
   });
 

@@ -2,8 +2,9 @@
 let selected = { services: [], date: null, time: null };
 let calYear, calMonth;
 let currentClient = null;
-let _slotLockTimer = null;   // countdown interval
-let _slotLockExpiry = null;  // timestamp
+let _slotLockTimer = null;
+let _slotLockExpiry = null;
+let _sheetsAppointments = null; // תורים שנטענו מ-Sheets - מקור האמת
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
@@ -318,14 +319,27 @@ function showStep(n) {
 }
 
 function bindSteps() {
-  document.getElementById('toStep2').addEventListener('click', () => { showStep(2); renderCalendar(); });
+  document.getElementById('toStep2').addEventListener('click', () => {
+    showStep(2);
+    // טען תורים מ-Sheets לפני הצגת הלוח שנה
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px">טוען זמינות...</p>';
+    loadFromSheets().then(appts => {
+      _sheetsAppointments = appts || getAppointments();
+      renderCalendar();
+    });
+  });
   document.getElementById('toStep1Back').addEventListener('click', () => showStep(1));
   document.getElementById('toStep3').addEventListener('click', () => {
     showStep(3);
     const grid = document.getElementById('slotsGrid');
     grid.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px">טוען שעות פנויות...</p>';
     document.getElementById('toStep4').disabled = true;
-    loadFromSheets().finally(() => renderSlots());
+    // רענן מ-Sheets בכל כניסה לשלב 3
+    loadFromSheets().then(appts => {
+      _sheetsAppointments = appts || getAppointments();
+      renderSlots();
+    });
   });
   document.getElementById('toStep2Back').addEventListener('click', () => showStep(2));
   document.getElementById('toStep4').addEventListener('click', () => { showStep(4); renderSummaryMini(); prefillClientDetails(); });
@@ -404,6 +418,8 @@ function renderCalendar() {
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const todayStr = todayStrTZ();
   const totalDuration = selected.services.reduce((sum, s) => sum + s.duration, 0);
+  // השתמש בנתונים מ-Sheets אם זמינים
+  const appts = _sheetsAppointments !== null ? _sheetsAppointments : getAppointments();
 
   let html = '';
   for (let i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
@@ -417,7 +433,7 @@ function renderCalendar() {
       cls += ' disabled';
       html += `<div class="${cls}">${d}</div>`;
     } else {
-      const slots = getAvailableSlots(dateStr, totalDuration);
+      const slots = getAvailableSlots(dateStr, totalDuration, appts);
       const isFull = slots.length === 0;
       cls += isFull ? ' full' : ' available';
       if (isSelected) cls += ' selected';
@@ -440,14 +456,14 @@ function renderCalendar() {
 }
 
 function showFullDayPopup(dateStr) {
-  // מצא את התאריך הפנוי הקרוב ביותר
   const totalDuration = selected.services.reduce((sum, s) => sum + s.duration, 0);
+  const appts = _sheetsAppointments !== null ? _sheetsAppointments : getAppointments();
   let nextFree = null;
   const search = new Date(dateStr);
   for (let i = 1; i <= 60; i++) {
     search.setDate(search.getDate() + 1);
     const d = search.getFullYear() + '-' + String(search.getMonth()+1).padStart(2,'0') + '-' + String(search.getDate()).padStart(2,'0');
-    if (isWorkDay(d) && getAvailableSlots(d, totalDuration).length > 0) { nextFree = d; break; }
+    if (isWorkDay(d) && getAvailableSlots(d, totalDuration, appts).length > 0) { nextFree = d; break; }
   }
 
   let existing = document.getElementById('fullDayPopup');
@@ -483,11 +499,8 @@ function jumpToDate(dateStr) {
 }
 
 function selectDate(dateStr) {
-  // שחרר lock קודם אם היה slot נבחר
-  if (selected.date && selected.time) releaseSlot(selected.date, selected.time);
   selected.date = dateStr;
   selected.time = null;
-  _clearSlotLockUI();
   document.getElementById('toStep3').disabled = false;
   renderCalendar();
 }
@@ -501,7 +514,9 @@ function renderSlots() {
   label.textContent = formatDate(selected.date);
 
   const totalDuration = selected.services.reduce((sum, s) => sum + s.duration, 0);
-  const slots = getAvailableSlots(selected.date, totalDuration);
+  // תמיד השתמש בנתונים מ-Sheets
+  const appts = _sheetsAppointments !== null ? _sheetsAppointments : getAppointments();
+  const slots = getAvailableSlots(selected.date, totalDuration, appts);
 
   if (slots.length === 0) {
     grid.innerHTML = '';
@@ -527,50 +542,10 @@ function renderSlots() {
 }
 
 function selectSlot(time, el) {
-  // שחרר lock קודם
-  if (selected.time) releaseSlot(selected.date, selected.time);
-
-  const locked = lockSlot(selected.date, time);
-  if (!locked) {
-    // מישהו אחר תפס את ה-slot באותה שנייה - רענן
-    el.disabled = true;
-    el.textContent = 'תפוס';
-    el.classList.add('taken');
-    renderSlots();
-    return;
-  }
-
   selected.time = time;
   document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('toStep4').disabled = false;
-  _startSlotLockCountdown();
-}
-
-function _startSlotLockCountdown() {
-  _clearSlotLockUI();
-  _slotLockExpiry = Date.now() + LOCK_TTL_MS;
-
-  let timerEl = document.getElementById('slotLockTimer');
-  if (!timerEl) {
-    timerEl = document.createElement('div');
-    timerEl.id = 'slotLockTimer';
-    timerEl.style.cssText = 'text-align:center;font-size:13px;color:#f0a500;font-weight:600;margin-top:10px;padding:8px;background:#fff8e6;border-radius:8px;border:1px solid #ffc107';
-    document.getElementById('slotsGrid').after(timerEl);
-  }
-
-  _slotLockTimer = setInterval(() => {
-    const remaining = Math.ceil((_slotLockExpiry - Date.now()) / 1000);
-    if (remaining <= 0) {
-      _clearSlotLockUI();
-      selected.time = null;
-      document.getElementById('toStep4').disabled = true;
-      document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
-      renderSlots();
-      return;
-    }
-    if (timerEl) timerEl.textContent = `⏳ ה-slot שמור לך עוד ${remaining} שניות`;
-  }, 1000);
 }
 
 function _clearSlotLockUI() {
@@ -660,18 +635,7 @@ function submitBooking(e) {
   if (!phone) { showFormError('אנא הכניסי מספר טלפון'); return; }
   if (!/^[0-9+\-\s]{9,15}$/.test(phone)) { showFormError('מספר טלפון לא תקין'); return; }
 
-  // בדוק שה-slot עדיין פנוי (re-validate לפני שמירה)
   const totalDuration = selected.services.reduce((sum, s) => sum + s.duration, 0);
-  const available = getAvailableSlots(selected.date, totalDuration);
-  if (!available.includes(selected.time)) {
-    showFormError('השעה שבחרת כבר נתפסה על ידי מישהו אחר. אנא בחרי שעה אחרת');
-    _clearSlotLockUI();
-    selected.time = null;
-    document.getElementById('toStep4').disabled = true;
-    showStep(3);
-    renderSlots();
-    return;
-  }
 
   const servicesNames = selected.services.map(s => s.name).join(', ');
   const servicesIcons = selected.services.map(s => s.icon).join(' ');
@@ -691,22 +655,29 @@ function submitBooking(e) {
     createdAt: new Date().toISOString(),
   };
 
-  // שחרר lock לפני שמירה (התור עצמו יחסום את ה-slot)
-  releaseSlot(selected.date, selected.time);
-  _clearSlotLockUI();
-
-  const appointments = getAppointments();
-  appointments.push(appt);
-  saveAppointments(appointments);
-  saveToSheets(appt);
-
-  saveClientToSheets(name, phone);
-  currentClient = { name, phone };
-  localStorage.setItem('clientSession', JSON.stringify(currentClient));
-  showClientGreeting(currentClient);
-  scheduleAppointmentReminders(appt);
-  sendReminderToSheets(appt);
-  showConfirmation(appt);
+  // שמור ל-Sheets ובדוק קונפליקט בצד השרת (Sheets = מקור האמת)
+  saveToSheetsWithConflictCheck(appt, (conflict) => {
+    if (conflict) {
+      showFormError('השעה שבחרת נתפסה זה עתה על ידי מישהו אחר. אנא בחרי שעה אחרת');
+      selected.time = null;
+      document.getElementById('toStep4').disabled = true;
+      showStep(3);
+      loadFromSheets().then(appts => {
+        _sheetsAppointments = appts || getAppointments();
+        renderSlots();
+      });
+      return;
+    }
+    // עדכן את ה-cache המקומי עם התור החדש
+    if (_sheetsAppointments) _sheetsAppointments.push(appt);
+    saveClientToSheets(name, phone);
+    currentClient = { name, phone };
+    localStorage.setItem('clientSession', JSON.stringify(currentClient));
+    showClientGreeting(currentClient);
+    scheduleAppointmentReminders(appt);
+    sendReminderToSheets(appt);
+    showConfirmation(appt);
+  });
 }
 
 // ── STEP 5: CONFIRMATION ──
