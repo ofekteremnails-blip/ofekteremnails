@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8"/>
@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
-  <title>ניהול | אופק תרם ניילס</title>
+  <title>????? | ???? ??? ?????</title>
   <link rel="stylesheet" href="style.css?v=4"/>
   <link rel="stylesheet" href="booking.css?v=5"/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
@@ -18,12 +18,12 @@
 </head>
 <body class="admin-page">
 
-  <!-- ══ LOGIN ══ -->
+  <!-- -- LOGIN -- -->
   <div class="login-overlay" id="loginOverlay">
     <div class="login-card">
       <img src="logo.png" alt="logo" class="login-logo"/>
-      <h2 class="login-title">ברוכה הבאה 👑</h2>
-      <p class="login-sub">לוח הניהול של אופק תרם ניילס</p>
+      <h2 class="login-title">????? ???? ??</h2>
+      <p class="login-sub">??? ?????? ?? ???? ??? ?????</p>
 
       <button id="biometricBtn" class="btn-biometric" style="display:none">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28">
@@ -31,21 +31,21 @@
           <circle cx="12" cy="12" r="3"/>
           <path d="M12 7v1M12 16v1M7 12h1M16 12h1"/>
         </svg>
-        כניסה עם Face ID
+        ????? ?? Face ID
       </button>
 
       <div class="login-form" id="passSection">
         <div class="login-input-wrap">
-          <input type="password" id="passInput" placeholder="סיסמה" autocomplete="current-password"/>
+          <input type="password" id="passInput" placeholder="?????" autocomplete="current-password"/>
         </div>
-        <button id="loginBtn" class="btn-login">כניסה</button>
-        <button id="setupBiometricBtn" class="btn-setup-biometric" style="display:none">🔒 הגדר Face ID</button>
+        <button id="loginBtn" class="btn-login">?????</button>
+        <button id="setupBiometricBtn" class="btn-setup-biometric" style="display:none">?? ???? Face ID</button>
       </div>
-      <p class="login-err hidden" id="loginErr">סיסמה שגויה, נסי שוב</p>
+      <p class="login-err hidden" id="loginErr">????? ?????, ??? ???</p>
     </div>
   </div>
 
-  <!-- ══ APP SHELL ══ -->
+  <!-- -- APP SHELL -- -->
   <div class="app-shell" id="adminWrap" style="display:none">
 
     <!-- DESKTOP SIDEBAR -->
@@ -56,49 +56,49 @@
       <nav class="sidebar-nav">
         <button class="snav-btn active" data-panel="dashboard">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-          <span>לוח בקרה</span>
+          <span>??? ????</span>
         </button>
         <button class="snav-btn" data-panel="calendar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          <span>יומן</span>
+          <span>????</span>
         </button>
         <button class="snav-btn" data-panel="appointments">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
-          <span>תורים</span>
+          <span>?????</span>
         </button>
         <button class="snav-btn" data-panel="clients">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/></svg>
-          <span>לקוחות</span>
+          <span>??????</span>
         </button>
         <button class="snav-btn" data-panel="stats">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>
-          <span>סטטיסטיקות</span>
+          <span>??????????</span>
         </button>
         <button class="snav-btn" data-panel="reviews">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <span>ביקורות</span>
+          <span>???????</span>
         </button>
         <button class="snav-btn" data-panel="services">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <span>שירותים</span>
+          <span>???????</span>
         </button>
         <button class="snav-btn" data-panel="settings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-          <span>הגדרות</span>
+          <span>??????</span>
         </button>
       </nav>
       <div class="sidebar-footer">
         <a href="my-appointments.html" class="sidebar-home">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
-          תורי לקוחות
+          ???? ??????
         </a>
         <a href="index.html" class="sidebar-home">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          דף הבית
+          ?? ????
         </a>
         <button class="sidebar-logout" id="logoutBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-          יציאה
+          ?????
         </button>
       </div>
     </aside>
@@ -109,33 +109,33 @@
       <!-- MOBILE TOPBAR -->
       <header class="mobile-topbar">
         <img src="logo.png" alt="logo" class="topbar-logo"/>
-        <span class="topbar-title" id="topbarTitle">לוח בקרה</span>
-        <button class="topbar-sync" onclick="syncSheets()" title="סנכרן">
+        <span class="topbar-title" id="topbarTitle">??? ????</span>
+        <button class="topbar-sync" onclick="syncSheets()" title="?????">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
         </button>
       </header>
 
-      <!-- ── DASHBOARD ── -->
+      <!-- -- DASHBOARD -- -->
       <div class="panel active" id="panel-dashboard">
         <div class="panel-header">
-          <h1 class="panel-title">לוח בקרה</h1>
+          <h1 class="panel-title">??? ????</h1>
           <div style="display:flex;gap:8px">
-          <button class="btn-icon-round" onclick="togglePanelSearch('dashboard')" title="חיפוש לקוח">
+          <button class="btn-icon-round" onclick="togglePanelSearch('dashboard')" title="????? ????">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
           </button>
-          <button class="btn-icon-round" onclick="syncSheets()" title="סנכרן">
+          <button class="btn-icon-round" onclick="syncSheets()" title="?????">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
           </button>
           </div>
         </div>
-        <div id="panelSearch-dashboard" style="display:none;padding:0 0 12px">
-          <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="panelSearchInput-dashboard" placeholder="חיפוש לקוחה..." oninput="runPanelSearch('dashboard',this.value)" autocomplete="off"/></div>
+        <div id="panelSearch-dashboard" style="display:none;padding:0 0 12px;position:sticky;top:0;z-index:100;background:#fff">
+          <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="panelSearchInput-dashboard" placeholder="????? ?????..." oninput="runPanelSearch('dashboard',this.value)" autocomplete="off"/></div>
         </div>
 
         <section class="dash-section" id="pendingSection">
           <div class="section-label" style="color:#f0a500">
             <span class="section-dot" style="background:#f0a500"></span>
-            ⏳ ממתינות לאישור
+            ? ??????? ??????
           </div>
           <div id="pendingList" class="appt-list"></div>
         </section>
@@ -143,7 +143,7 @@
         <section class="dash-section">
           <div class="section-label">
             <span class="section-dot dot-today"></span>
-            תורים להיום
+            ????? ?????
           </div>
           <div id="todayList" class="appt-list"></div>
         </section>
@@ -151,7 +151,7 @@
         <section class="dash-section">
           <div class="section-label">
             <span class="section-dot" style="background:#ff9800"></span>
-            🔔 תזכורות תחזוקה
+            ?? ??????? ??????
           </div>
           <div id="maintenanceList" class="appt-list"></div>
         </section>
@@ -159,7 +159,7 @@
         <section class="dash-section">
           <div class="section-label">
             <span class="section-dot" style="background:#25D366"></span>
-            📢 תזכורות למחר
+            ?? ??????? ????
           </div>
           <div id="remindersList" class="appt-list"></div>
         </section>
@@ -167,43 +167,43 @@
         <section class="dash-section">
           <div class="section-label">
             <span class="section-dot" style="background:#c97a96"></span>
-            כל התורים
+            ?? ??????
           </div>
           <div id="allApptsDashList" class="appt-list"></div>
         </section>
 
         <div class="stats-grid">
           <div class="stat-card stat-today">
-            <div class="stat-icon">📅</div>
+            <div class="stat-icon">??</div>
             <span class="stat-num" id="statToday">0</span>
-            <p>היום</p>
+            <p>????</p>
           </div>
           <div class="stat-card stat-week">
-            <div class="stat-icon">📆</div>
+            <div class="stat-icon">??</div>
             <span class="stat-num" id="statWeek">0</span>
-            <p>השבוע</p>
+            <p>?????</p>
           </div>
           <div class="stat-card stat-pending">
-            <div class="stat-icon">⏳</div>
+            <div class="stat-icon">?</div>
             <span class="stat-num" id="statPending">0</span>
-            <p>ממתינות</p>
+            <p>???????</p>
           </div>
           <div class="stat-card stat-revenue">
-            <div class="stat-icon">💰</div>
-            <span class="stat-num stat-num-sm" id="statRevenue">₪0</span>
-            <p>החודש</p>
+            <div class="stat-icon">??</div>
+            <span class="stat-num stat-num-sm" id="statRevenue">?0</span>
+            <p>?????</p>
           </div>
           <div class="stat-card stat-total">
-            <div class="stat-icon">📊</div>
+            <div class="stat-icon">??</div>
             <span class="stat-num" id="statTotal">0</span>
-            <p>סה&quot;כ</p>
+            <p>??&quot;?</p>
           </div>
         </div>
 
         <div class="search-bar-wrap">
           <div class="search-bar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input type="text" id="dashSearch" placeholder="חיפוש לפי שם או טלפון..."/>
+            <input type="text" id="dashSearch" placeholder="????? ??? ?? ?? ?????..."/>
           </div>
           <div id="dashSearchResults" class="appt-list" style="margin-top:10px"></div>
         </div>
@@ -211,7 +211,7 @@
         <section class="dash-section">
           <div class="section-label">
             <span class="section-dot dot-tomorrow"></span>
-            תורים מחר
+            ????? ???
           </div>
           <div id="tomorrowList" class="appt-list"></div>
         </section>
@@ -219,30 +219,30 @@
         <section class="dash-section">
           <div class="section-label">
             <span class="section-dot dot-week"></span>
-            7 ימים קרובים
+            7 ???? ??????
           </div>
           <div id="upcomingList" class="appt-list"></div>
         </section>
 
       </div>
 
-      <!-- ── CALENDAR ── -->
+      <!-- -- CALENDAR -- -->
       <div class="panel" id="panel-calendar">
         <div class="panel-header">
-          <h1 class="panel-title">יומן תורים</h1>
+          <h1 class="panel-title">???? ?????</h1>
           <div style="display:flex;gap:8px">
-            <button class="btn-icon-round" onclick="togglePanelSearch('calendar')" title="חיפוש לקוח">
+            <button class="btn-icon-round" onclick="togglePanelSearch('calendar')" title="????? ????">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             </button>
-            <button class="btn-icon-round" id="calViewMonth" onclick="setCalView('month')" title="תצוגת חודש" style="background:var(--dark-pink);color:#fff">חודש</button>
-            <button class="btn-icon-round" id="calViewWeek" onclick="setCalView('week')" title="תצוגת שבוע">שבוע</button>
+            <button class="btn-icon-round" id="calViewMonth" onclick="setCalView('month')" title="????? ????" style="background:var(--dark-pink);color:#fff">????</button>
+            <button class="btn-icon-round" id="calViewWeek" onclick="setCalView('week')" title="????? ????">????</button>
           </div>
         </div>
-        <div id="panelSearch-calendar" style="display:none;padding:0 0 12px">
-          <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="panelSearchInput-calendar" placeholder="חיפוש לקוחה..." oninput="runPanelSearch('calendar',this.value)" autocomplete="off"/></div>
+        <div id="panelSearch-calendar" style="display:none;padding:0 0 12px;position:sticky;top:0;z-index:100;background:#fff">
+          <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="panelSearchInput-calendar" placeholder="????? ?????..." oninput="runPanelSearch('calendar',this.value)" autocomplete="off"/></div>
         </div>
 
-        <!-- תצוגת חודש -->
+        <!-- ????? ???? -->
         <div id="calMonthView">
           <div class="cal-card">
             <div class="cal-nav">
@@ -251,13 +251,13 @@
               <button class="cal-nav-btn" id="adminNextMonth">&#8249;</button>
             </div>
             <div class="cal-days-header">
-              <span>א׳</span><span>ב׳</span><span>ג׳</span><span>ד׳</span><span>ה׳</span><span>ו׳</span><span>ש׳</span>
+              <span>??</span><span>??</span><span>??</span><span>??</span><span>??</span><span>??</span><span>??</span>
             </div>
             <div class="cal-grid" id="adminCalGrid"></div>
           </div>
         </div>
 
-        <!-- תצוגת שבוע -->
+        <!-- ????? ???? -->
         <div id="calWeekView" style="display:none">
           <div class="cal-card">
             <div class="cal-nav">
@@ -271,12 +271,12 @@
 
         <div class="day-view-card" id="adminDayView">
           <div class="day-view-header">
-            <h2 id="adminDayTitle">בחרי יום לצפייה</h2>
+            <h2 id="adminDayTitle">???? ??? ??????</h2>
             <div style="display:flex;gap:8px">
-              <button class="btn-icon-round" onclick="openAddApptModal(adminSelectedDate)" title="הוסף תור" style="background:#25D366;color:#fff">
+              <button class="btn-icon-round" onclick="openAddApptModal(adminSelectedDate)" title="???? ???" style="background:#25D366;color:#fff">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </button>
-              <button class="btn-block-day" id="blockDayBtn">🚫 חסום</button>
+              <button class="btn-block-day" id="blockDayBtn">?? ????</button>
             </div>
           </div>
           <div id="freeSlotsSummary" style="margin-bottom:10px"></div>
@@ -284,106 +284,106 @@
         </div>
       </div>
 
-      <!-- מודל הוספת תור מהיומן -->
+      <!-- ???? ????? ??? ?????? -->
       <div id="addApptModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;padding:20px;overflow-y:auto">
         <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);margin:auto">
-          <h3 style="font-family:'DM Serif Display',serif;color:var(--dark);margin-bottom:20px;font-size:20px">➕ הוספת תור</h3>
+          <h3 style="font-family:'DM Serif Display',serif;color:var(--dark);margin-bottom:20px;font-size:20px">? ????? ???</h3>
           <div class="form-field">
-            <label>תאריך</label>
+            <label>?????</label>
             <input type="date" id="addApptDate" class="field-input"/>
           </div>
           <div class="form-field">
-            <label>שירותים</label>
+            <label>???????</label>
             <div id="addApptServicesWrap" style="display:flex;flex-direction:column;gap:8px;background:#fdf8fa;border-radius:12px;padding:10px;border:1.5px solid #f0e0e8"></div>
             <div id="addApptServicesSummary" style="font-size:12px;color:#b76e79;margin-top:6px;font-weight:600"></div>
           </div>
           <div class="form-field">
-            <label>שעה</label>
+            <label>???</label>
             <div style="display:flex;gap:8px;align-items:center">
-              <input type="time" id="addApptTime" class="field-input" style="flex:1" placeholder="משעה"/>
-              <span style="color:#aaa;font-size:13px;white-space:nowrap">עד</span>
-              <input type="time" id="addApptTimeEnd" class="field-input" style="flex:1" placeholder="עד שעה"/>
+              <input type="time" id="addApptTime" class="field-input" style="flex:1" placeholder="????"/>
+              <span style="color:#aaa;font-size:13px;white-space:nowrap">??</span>
+              <input type="time" id="addApptTimeEnd" class="field-input" style="flex:1" placeholder="?? ???"/>
             </div>
             <div id="addApptSlotsWrap"></div>
           </div>
           <div class="form-field">
-            <label>לקוחה</label>
+            <label>?????</label>
             <div style="display:flex;gap:8px;margin-bottom:8px">
-              <button type="button" id="apptClientModeExisting" onclick="setApptClientMode('existing')" style="flex:1;padding:8px;border:2px solid var(--dark-pink);border-radius:10px;background:var(--dark-pink);color:#fff;cursor:pointer;font-family:Heebo,sans-serif;font-size:13px;font-weight:600">לקוחה קיימת</button>
-              <button type="button" id="apptClientModeNew" onclick="setApptClientMode('new')" style="flex:1;padding:8px;border:2px solid #e0e0e0;border-radius:10px;background:#fff;color:#888;cursor:pointer;font-family:Heebo,sans-serif;font-size:13px">לקוחה חדשה</button>
+              <button type="button" id="apptClientModeExisting" onclick="setApptClientMode('existing')" style="flex:1;padding:8px;border:2px solid var(--dark-pink);border-radius:10px;background:var(--dark-pink);color:#fff;cursor:pointer;font-family:Heebo,sans-serif;font-size:13px;font-weight:600">????? ?????</button>
+              <button type="button" id="apptClientModeNew" onclick="setApptClientMode('new')" style="flex:1;padding:8px;border:2px solid #e0e0e0;border-radius:10px;background:#fff;color:#888;cursor:pointer;font-family:Heebo,sans-serif;font-size:13px">????? ????</button>
             </div>
             <div id="apptClientExistingWrap">
-              <input type="text" id="addApptClientSearch" class="field-input" placeholder="חיפוש לפי שם או טלפון..." oninput="filterApptClients(this.value)"/>
+              <input type="text" id="addApptClientSearch" class="field-input" placeholder="????? ??? ?? ?? ?????..." oninput="filterApptClients(this.value)"/>
               <div id="addApptClientList" style="max-height:160px;overflow-y:auto;border:1.5px solid #f0e0e8;border-radius:10px;margin-top:6px;background:#fff"></div>
             </div>
             <div id="apptClientNewWrap" style="display:none">
-              <input type="text" id="addApptName" class="field-input" placeholder="שם מלא" style="margin-bottom:8px"/>
+              <input type="text" id="addApptName" class="field-input" placeholder="?? ???" style="margin-bottom:8px"/>
               <input type="tel" id="addApptPhone" class="field-input" placeholder="05X-XXXXXXX"/>
             </div>
             <div id="apptSelectedClient" style="display:none;background:#e8f8ef;border-radius:10px;padding:10px 14px;margin-top:8px;font-size:14px;color:#1a6e3a;font-weight:600"></div>
           </div>
           <div class="form-field">
-            <label>הערות (אופציונלי)</label>
-            <input type="text" id="addApptNotes" class="field-input" placeholder="הערות..."/>
+            <label>????? (?????????)</label>
+            <input type="text" id="addApptNotes" class="field-input" placeholder="?????..."/>
           </div>
           <div style="display:flex;gap:10px;margin-top:20px">
-            <button onclick="closeAddApptModal()" style="flex:1;padding:12px;border:2px solid #e0e0e0;border-radius:12px;background:none;cursor:pointer;font-family:Heebo,sans-serif;font-size:14px;color:#888">ביטול</button>
-            <button onclick="submitAddAppt()" style="flex:2;padding:12px;border:none;border-radius:12px;background:#b76e79;color:#fff;cursor:pointer;font-family:Heebo,sans-serif;font-size:14px;font-weight:700">✓ הוסף תור</button>
+            <button onclick="closeAddApptModal()" style="flex:1;padding:12px;border:2px solid #e0e0e0;border-radius:12px;background:none;cursor:pointer;font-family:Heebo,sans-serif;font-size:14px;color:#888">?????</button>
+            <button onclick="submitAddAppt()" style="flex:2;padding:12px;border:none;border-radius:12px;background:#b76e79;color:#fff;cursor:pointer;font-family:Heebo,sans-serif;font-size:14px;font-weight:700">? ???? ???</button>
           </div>
         </div>
       </div>
 
-      <!-- ── ALL APPOINTMENTS ── -->
+      <!-- -- ALL APPOINTMENTS -- -->
       <div class="panel" id="panel-appointments">
         <div class="panel-header">
-          <h1 class="panel-title">כל התורים</h1>
+          <h1 class="panel-title">?? ??????</h1>
           <div style="display:flex;gap:8px">
-          <button class="btn-icon-round" onclick="togglePanelSearch('appointments')" title="חיפוש לקוח">
+          <button class="btn-icon-round" onclick="togglePanelSearch('appointments')" title="????? ????">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
           </button>
-          <button class="btn-icon-round" onclick="openAddApptModal()" title="הוסף תור" style="background:#25D366;color:#fff">
+          <button class="btn-icon-round" onclick="openAddApptModal()" title="???? ???" style="background:#25D366;color:#fff">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
           </div>
         </div>
-        <div id="panelSearch-appointments" style="display:none;padding:0 0 12px">
-          <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="panelSearchInput-appointments" placeholder="חיפוש לקוחה..." oninput="runPanelSearch('appointments',this.value)" autocomplete="off"/></div>
+        <div id="panelSearch-appointments" style="display:none;padding:0 0 12px;position:sticky;top:0;z-index:100;background:#fff">
+          <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="panelSearchInput-appointments" placeholder="????? ?????..." oninput="runPanelSearch('appointments',this.value)" autocomplete="off"/></div>
         </div>
         
         <div class="filters-bar">
           <select id="filterStatus" class="filter-select">
-            <option value="all">כל הסטטוסים</option>
-            <option value="pending">ממתין</option>
-            <option value="confirmed">מאושר</option>
-            <option value="completed">הושלם</option>
-            <option value="cancelled">בוטל</option>
+            <option value="all">?? ????????</option>
+            <option value="pending">?????</option>
+            <option value="confirmed">?????</option>
+            <option value="completed">?????</option>
+            <option value="cancelled">????</option>
           </select>
           <input type="date" id="filterDate" class="filter-date"/>
-          <button class="btn-clear" id="clearFilter">נקה</button>
+          <button class="btn-clear" id="clearFilter">???</button>
         </div>
         <div id="allApptList" class="appt-list"></div>
       </div>
 
-      <!-- ── CLIENTS ── -->
+      <!-- -- CLIENTS -- -->
       <div class="panel" id="panel-clients">
         <div class="panel-header">
-          <h1 class="panel-title">לקוחות</h1>
+          <h1 class="panel-title">??????</h1>
           <div style="display:flex;gap:8px">
-            <button class="btn-icon-round" onclick="togglePanelSearch('clients')" title="חיפוש לקוח">
+            <button class="btn-icon-round" onclick="togglePanelSearch('clients')" title="????? ????">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             </button>
-            <button class="btn-icon-round" onclick="removeDuplicates()" title="מחק כפילויות" style="background:#f0a500">
+            <button class="btn-icon-round" onclick="removeDuplicates()" title="??? ????????" style="background:#f0a500">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
             </button>
-            <button class="btn-icon-round" onclick="addNewClient()" title="הוסף לקוח">
+            <button class="btn-icon-round" onclick="addNewClient()" title="???? ????">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
           </div>
         </div>
-        <div class="search-bar-wrap">
+        <div class="search-bar-wrap" style="position:sticky;top:0;z-index:100;background:#fff;padding-bottom:4px">
           <div class="search-bar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input type="text" id="clientSearch" placeholder="חיפוש לפי שם או טלפון..."/>
+            <input type="text" id="clientSearch" placeholder="????? ??? ?? ?? ?????..."/>
           </div>
         </div>
         <div id="clientsList" class="clients-list"></div>
@@ -392,141 +392,141 @@
       <!-- CLIENT GALLERY MODAL -->
       <div id="clientGalleryModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;padding:20px;overflow-y:auto">
         <div style="max-width:900px;margin:0 auto;position:relative">
-          <button onclick="closeClientGallery()" style="position:absolute;top:10px;left:10px;background:#fff;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:20px;z-index:10">✕</button>
+          <button onclick="closeClientGallery()" style="position:absolute;top:10px;left:10px;background:#fff;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:20px;z-index:10">?</button>
           <div id="clientGalleryContent" style="background:#fff;border-radius:20px;padding:32px 24px"></div>
         </div>
       </div>
 
-      <!-- ── STATISTICS ── -->
+      <!-- -- STATISTICS -- -->
       <div class="panel" id="panel-stats">
         <div class="panel-header">
-          <h1 class="panel-title">סטטיסטיקות ודוחות</h1>
+          <h1 class="panel-title">?????????? ??????</h1>
         </div>
         
         <div class="settings-card">
-          <h3 class="settings-card-title">📈 סטטיסטיקות כלליות</h3>
+          <h3 class="settings-card-title">?? ?????????? ??????</h3>
           <div id="generalStats"></div>
         </div>
         
         <div class="settings-card">
-          <h3 class="settings-card-title">👑 לקוחות VIP</h3>
-          <p style="font-size:13px;color:#aaa;margin-bottom:14px">הלקוחות שהכי הרבה מגיעות</p>
+          <h3 class="settings-card-title">?? ?????? VIP</h3>
+          <p style="font-size:13px;color:#aaa;margin-bottom:14px">??????? ???? ???? ??????</p>
           <div id="vipClients"></div>
         </div>
         
         <div class="settings-card">
-          <h3 class="settings-card-title">💅 שירותים פופולריים</h3>
+          <h3 class="settings-card-title">?? ??????? ?????????</h3>
           <div id="popularServices"></div>
         </div>
         
         <div class="settings-card">
-          <h3 class="settings-card-title">🕐 שעות עומס</h3>
-          <p style="font-size:13px;color:#aaa;margin-bottom:14px">באיזה שעות יש הכי הרבה תורים</p>
+          <h3 class="settings-card-title">?? ???? ????</h3>
+          <p style="font-size:13px;color:#aaa;margin-bottom:14px">????? ???? ?? ??? ???? ?????</p>
           <div id="peakHours"></div>
         </div>
         
         <div class="settings-card">
-          <h3 class="settings-card-title">📅 הכנסות חודשיות</h3>
+          <h3 class="settings-card-title">?? ?????? ???????</h3>
           <div id="monthlyRevenue"></div>
         </div>
       </div>
 
-      <!-- ── REVIEWS ── -->
+      <!-- -- REVIEWS -- -->
       <div class="panel" id="panel-reviews">
         <div class="panel-header">
-          <h1 class="panel-title">ביקורות</h1>
+          <h1 class="panel-title">???????</h1>
         </div>
         <div id="reviewsList"></div>
       </div>
 
-      <!-- ── SERVICES ── -->
+      <!-- -- SERVICES -- -->
       <div class="panel" id="panel-services">
         <div class="panel-header">
-          <h1 class="panel-title">שירותים</h1>
+          <h1 class="panel-title">???????</h1>
         </div>
         <div id="servicesEditor" class="services-editor"></div>
         <button class="btn-add-service" id="addServiceBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          הוסף שירות
+          ???? ?????
         </button>
-        <button class="btn-primary" id="saveServices" style="margin-top:12px;width:100%">שמור שירותים ✓</button>
+        <button class="btn-primary" id="saveServices" style="margin-top:12px;width:100%">???? ??????? ?</button>
       </div>
 
-      <!-- ── SETTINGS ── -->
+      <!-- -- SETTINGS -- -->
       <div class="panel" id="panel-settings">
         <div class="panel-header">
-          <h1 class="panel-title">הגדרות</h1>
+          <h1 class="panel-title">??????</h1>
         </div>
 
         <div class="settings-card">
-          <h3 class="settings-card-title">שעות עבודה</h3>
+          <h3 class="settings-card-title">???? ?????</h3>
           <div id="workDaysEditor"></div>
         </div>
 
         <div class="settings-card">
-          <h3 class="settings-card-title">כלליות</h3>
+          <h3 class="settings-card-title">??????</h3>
           <div class="form-field">
-            <label>☕ הפסקת צהריים (אופציונלי)</label>
+            <label>? ????? ?????? (?????????)</label>
             <div style="display:flex;gap:10px;align-items:center">
               <input type="time" id="lunchBreakStart" class="field-input" style="flex:1"/>
-              <span style="color:#aaa">עד</span>
+              <span style="color:#aaa">??</span>
               <input type="time" id="lunchBreakEnd" class="field-input" style="flex:1"/>
             </div>
-            <p style="font-size:12px;color:#888;margin-top:4px">לקוחות לא יוכלו לקבוע תורים בזמן הזה</p>
+            <p style="font-size:12px;color:#888;margin-top:4px">?????? ?? ????? ????? ????? ???? ???</p>
           </div>
           <div class="form-field">
-            <label>מספר וואטסאפ</label>
+            <label>???? ???????</label>
             <input type="tel" id="waPhoneInput" placeholder="972XXXXXXXXX" class="field-input"/>
           </div>
           <div class="form-field">
-            <label>קישור Bit לתשלום (אופציונלי)</label>
+            <label>????? Bit ?????? (?????????)</label>
             <input type="text" id="bitLinkInput" placeholder="https://bit.ly/..." class="field-input"/>
-            <p style="font-size:12px;color:#888;margin-top:4px">הקישור יישלח ללקוחות לתשלום מקדמה</p>
+            <p style="font-size:12px;color:#888;margin-top:4px">?????? ????? ??????? ?????? ?????</p>
           </div>
           <div class="form-field">
-            <label>סכום מקדמה (₪)</label>
+            <label>???? ????? (?)</label>
             <input type="number" id="depositAmount" placeholder="50" class="field-input" min="0"/>
           </div>
           <div class="form-field">
-            <label>סיסמת ניהול</label>
-            <input type="password" id="newPassInput" placeholder="סיסמה חדשה" class="field-input"/>
+            <label>????? ?????</label>
+            <input type="password" id="newPassInput" placeholder="????? ????" class="field-input"/>
           </div>
         </div>
 
         <div class="settings-card">
-          <h3 class="settings-card-title">🏖️ מצב חופשה</h3>
-          <p style="font-size:13px;color:#aaa;margin-bottom:14px">חסום תאריכים בטווח אחד - מושלם לחופשות או חגים</p>
+          <h3 class="settings-card-title">??? ??? ?????</h3>
+          <p style="font-size:13px;color:#aaa;margin-bottom:14px">???? ??????? ????? ??? - ????? ??????? ?? ????</p>
           <div class="vacation-mode-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
             <input type="date" id="vacationStart" class="field-input" style="flex:1;min-width:140px"/>
-            <span style="color:#aaa;font-size:14px">עד</span>
+            <span style="color:#aaa;font-size:14px">??</span>
             <input type="date" id="vacationEnd" class="field-input" style="flex:1;min-width:140px"/>
-            <button class="btn-primary" id="addVacation" style="white-space:nowrap">🏖️ חסום תקופה</button>
+            <button class="btn-primary" id="addVacation" style="white-space:nowrap">??? ???? ?????</button>
           </div>
           <div id="vacationsList" style="margin-top:12px"></div>
         </div>
 
         <div class="settings-card">
-          <h3 class="settings-card-title">שעות מיוחדות לתאריך ספציפי</h3>
-          <p style="font-size:13px;color:#aaa;margin-bottom:14px">פתחי טווח שעות לתאריך ספציפי — לקוחות יוכלו לקבוע תורים רגילים בתוך הטווח</p>
+          <h3 class="settings-card-title">???? ??????? ?????? ??????</h3>
+          <p style="font-size:13px;color:#aaa;margin-bottom:14px">???? ???? ???? ?????? ?????? � ?????? ????? ????? ????? ?????? ???? ?????</p>
           <div class="custom-hours-add-row">
             <input type="date" id="customHourDate" class="field-input"/>
             <input type="time" id="customHourStart" class="field-input" value="19:00"/>
-            <span style="color:#aaa;align-self:center">עד</span>
+            <span style="color:#aaa;align-self:center">??</span>
             <input type="time" id="customHourEnd" class="field-input" value="22:00"/>
-            <button class="btn-primary" id="addCustomHour">+ הוסף</button>
+            <button class="btn-primary" id="addCustomHour">+ ????</button>
           </div>
           <div id="customHoursList" class="blocked-list" style="margin-top:12px"></div>
         </div>
 
         <div class="settings-card">
-          <h3 class="settings-card-title">⏰ חסימת שעות בתאריך ספציפי</h3>
-          <p style="font-size:13px;color:#aaa;margin-bottom:14px">חסומי טווח שעות ביום מסוים — לקוחות לא יוכלו לקבוע תורים בזמן זה</p>
+          <h3 class="settings-card-title">? ????? ???? ?????? ??????</h3>
+          <p style="font-size:13px;color:#aaa;margin-bottom:14px">????? ???? ???? ???? ????? � ?????? ?? ????? ????? ????? ???? ??</p>
           <div class="custom-hours-add-row">
             <input type="date" id="blockHourDate" class="field-input"/>
             <input type="time" id="blockHourStart" class="field-input"/>
-            <span style="color:#aaa;align-self:center">עד</span>
+            <span style="color:#aaa;align-self:center">??</span>
             <input type="time" id="blockHourEnd" class="field-input"/>
-            <button class="btn-primary" id="addBlockHour">+ חסום</button>
+            <button class="btn-primary" id="addBlockHour">+ ????</button>
           </div>
           <div id="blockedHoursList" class="blocked-list" style="margin-top:12px"></div>
         </div>
@@ -534,12 +534,12 @@
         <div class="settings-card">
           <div class="block-date-row">
             <input type="date" id="blockDateInput" class="field-input"/>
-            <button class="btn-primary" id="addBlockDate">+ חסום</button>
+            <button class="btn-primary" id="addBlockDate">+ ????</button>
           </div>
           <div id="blockedDatesList" class="blocked-list"></div>
         </div>
 
-        <button class="btn-primary" id="saveSettings" style="width:100%;margin-top:8px">שמור הגדרות ✓</button>
+        <button class="btn-primary" id="saveSettings" style="width:100%;margin-top:8px">???? ?????? ?</button>
       </div>
 
     </main>
@@ -548,27 +548,27 @@
     <nav class="bottom-nav">
       <button class="bnav-btn active" data-panel="dashboard">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        <span>בקרה</span>
+        <span>????</span>
       </button>
       <button class="bnav-btn" data-panel="calendar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        <span>יומן</span>
+        <span>????</span>
       </button>
       <button class="bnav-btn" data-panel="appointments">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
-        <span>תורים</span>
+        <span>?????</span>
       </button>
       <button class="bnav-btn" data-panel="clients">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
-        <span>לקוחות</span>
+        <span>??????</span>
       </button>
       <button class="bnav-btn" data-panel="services">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <span>שירותים</span>
+        <span>???????</span>
       </button>
       <button class="bnav-btn" data-panel="settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-        <span>הגדרות</span>
+        <span>??????</span>
       </button>
     </nav>
 
