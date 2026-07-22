@@ -2,6 +2,14 @@
 function togglePanelSearch(panel) {
   const wrap = document.getElementById('panelSearch-' + panel);
   const input = document.getElementById('panelSearchInput-' + panel);
+  if (!wrap && panel === 'clients') {
+    const clientInput = document.getElementById('clientSearch');
+    if (clientInput) {
+      clientInput.focus();
+      clientInput.select();
+    }
+    return;
+  }
   if (!wrap) return;
   const isOpen = wrap.style.display !== 'none';
   wrap.style.display = isOpen ? 'none' : '';
@@ -1989,20 +1997,29 @@ function saveSettingsHandler() {
 
 // ── CLIENTS LIST ──
 function _displayClients(clients) {
-  const search = document.getElementById('clientSearch')?.value.toLowerCase() || '';
+  const searchRaw = document.getElementById('clientSearch')?.value.trim() || '';
+  const search = searchRaw.toLowerCase();
+  const searchPhone = searchRaw.replace(/\D/g, '');
   const list = document.getElementById('clientsList');
   if (!list) return;
   if (!clients || clients.length === 0) { list.innerHTML = emptyMsg('אין לקוחות רשומים עדיין'); return; }
   const filtered = search
-    ? clients.filter(c => c.name.toLowerCase().includes(search) || c.phone.includes(search))
+    ? clients.filter(c => {
+        const name = String(c.name || '').toLowerCase();
+        const phone = String(c.phone || '');
+        const phoneDigits = phone.replace(/\D/g, '');
+        return name.includes(search) || phone.toLowerCase().includes(search) || (searchPhone && phoneDigits.includes(searchPhone));
+      })
     : clients;
   if (filtered.length === 0) { list.innerHTML = emptyMsg('לא נמצאו תוצאות'); return; }
   const appts = getAppointments();
   list.innerHTML = filtered.map(c => {
+    const clientName = String(c.name || '');
+    const clientPhone = String(c.phone || '');
     const normPhone = (p) => String(p || '').replace(/\D/g, '');
-    const clientAppts = appts.filter(a => normPhone(a.clientPhone) === normPhone(c.phone) && a.status !== 'cancelled');
+    const clientAppts = appts.filter(a => normPhone(a.clientPhone) === normPhone(clientPhone) && a.status !== 'cancelled');
     const lastAppt = clientAppts.sort((a,b) => b.date.localeCompare(a.date))[0];
-    let displayPhone = String(c.phone || '').replace(/\D/g, '');
+    let displayPhone = clientPhone.replace(/\D/g, '');
     if (displayPhone && !displayPhone.startsWith('972')) {
       if (displayPhone.startsWith('0')) displayPhone = displayPhone;
       else displayPhone = '0' + displayPhone;
@@ -2012,18 +2029,18 @@ function _displayClients(clients) {
     const waPhone = displayPhone.replace(/\D/g, '').replace(/^0/, '972');
     return `
       <div class="client-card">
-        <div class="client-avatar">${c.name.charAt(0)}</div>
+        <div class="client-avatar">${sanitize(clientName.charAt(0) || '?')}</div>
         <div class="client-info">
-          <strong>${sanitize(c.name)}</strong>
+          <strong>${sanitize(clientName || 'ללא שם')}</strong>
           <span><a href="tel:${sanitize(displayPhone)}">${sanitize(displayPhone)}</a></span>
           <span>תורים: ${clientAppts.length} | אחרון: ${lastAppt ? lastAppt.date : 'אין'}</span>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button onclick="viewClientGallery('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn" style="background:#e8f0ff;color:#1a5a9e;font-size:12px;padding:8px 12px">🖼️</button>
-          <button onclick="editClient('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn" style="background:#e8f8ef;color:#1a9e4a;font-size:12px;padding:8px 12px">✏️</button>
-          <a href="javascript:void(0)" onclick="sendBookingConfirmWAClient('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn wa" style="font-size:12px;padding:8px 12px" title="נקבע לך תור">💬 נקבע תור</a>
-          <button onclick="sendReminderWAClient('${sanitize(c.phone)}', '${sanitize(c.name)}')" class="act-btn wa" style="font-size:12px;padding:8px 12px;background:#ff9800" title="תזכורת לתור">🔔 תזכורת</button>
-          <button onclick="deleteClient('${sanitize(c.phone)}')" class="act-btn del" style="font-size:12px;padding:8px 12px">🗑</button>
+          <button onclick="viewClientGallery('${sanitize(clientPhone)}', '${sanitize(clientName)}')" class="act-btn" style="background:#e8f0ff;color:#1a5a9e;font-size:12px;padding:8px 12px">🖼️</button>
+          <button onclick="editClient('${sanitize(clientPhone)}', '${sanitize(clientName)}')" class="act-btn" style="background:#e8f8ef;color:#1a9e4a;font-size:12px;padding:8px 12px">✏️</button>
+          <a href="javascript:void(0)" onclick="sendBookingConfirmWAClient('${sanitize(clientPhone)}', '${sanitize(clientName)}')" class="act-btn wa" style="font-size:12px;padding:8px 12px" title="נקבע לך תור">💬 נקבע תור</a>
+          <button onclick="sendReminderWAClient('${sanitize(clientPhone)}', '${sanitize(clientName)}')" class="act-btn wa" style="font-size:12px;padding:8px 12px;background:#ff9800" title="תזכורת לתור">🔔 תזכורת</button>
+          <button onclick="deleteClient('${sanitize(clientPhone)}')" class="act-btn del" style="font-size:12px;padding:8px 12px">🗑</button>
         </div>
       </div>`;
   }).join('');
