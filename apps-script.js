@@ -292,6 +292,23 @@ function hasConflict(date, time, duration) {
   return false;
 }
 
+// בדיקה למנהל - חוסם רק אם יש תור confirmed אחר באותה שעה (לא pending)
+function hasConfirmedConflict(date, time, duration) {
+  if (getSheet().getLastRow() <= 1) return false;
+  const rows = getSheet().getRange(2, 1, getSheet().getLastRow() - 1, 9).getValues();
+  const newStart = timeToMins(time);
+  const newEnd   = newStart + (Number(duration) || 60);
+  for (const row of rows) {
+    if (String(row[2]) !== String(date)) continue;
+    const status = String(row[7]);
+    if (status === 'cancelled' || status === 'pending') continue;
+    const s = timeToMins(String(row[3]));
+    const e = s + (Number(row[8]) || 60);
+    if (newStart < e && newEnd > s) return true;
+  }
+  return false;
+}
+
 function timeToMins(t) {
   if (!t || t.includes('1899') || t.includes('T')) {
     const d = new Date(t); return d.getHours() * 60 + d.getMinutes();
@@ -305,7 +322,8 @@ function saveAppointment(data) {
     ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat().map(String)
     : [];
   if (ids.includes(String(data.id))) return;
-  if (hasConflict(data.date, data.time, data.duration)) return 'conflict';
+  const conflictCheck = (data.status === 'confirmed') ? hasConfirmedConflict : hasConflict;
+  if (conflictCheck(data.date, data.time, data.duration)) return 'conflict';
 
   sheet.appendRow([
     data.id, data.serviceName, data.date, data.time,

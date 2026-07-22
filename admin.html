@@ -293,12 +293,20 @@
             <div id="addApptSlotsWrap"></div>
           </div>
           <div class="form-field">
-            <label>שם לקוחה</label>
-            <input type="text" id="addApptName" class="field-input" placeholder="שם מלא"/>
-          </div>
-          <div class="form-field">
-            <label>טלפון</label>
-            <input type="tel" id="addApptPhone" class="field-input" placeholder="05X-XXXXXXX"/>
+            <label>לקוחה</label>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <button type="button" id="apptClientModeExisting" onclick="setApptClientMode('existing')" style="flex:1;padding:8px;border:2px solid var(--dark-pink);border-radius:10px;background:var(--dark-pink);color:#fff;cursor:pointer;font-family:Heebo,sans-serif;font-size:13px;font-weight:600">לקוחה קיימת</button>
+              <button type="button" id="apptClientModeNew" onclick="setApptClientMode('new')" style="flex:1;padding:8px;border:2px solid #e0e0e0;border-radius:10px;background:#fff;color:#888;cursor:pointer;font-family:Heebo,sans-serif;font-size:13px">לקוחה חדשה</button>
+            </div>
+            <div id="apptClientExistingWrap">
+              <input type="text" id="addApptClientSearch" class="field-input" placeholder="חיפוש לפי שם או טלפון..." oninput="filterApptClients(this.value)"/>
+              <div id="addApptClientList" style="max-height:160px;overflow-y:auto;border:1.5px solid #f0e0e8;border-radius:10px;margin-top:6px;background:#fff"></div>
+            </div>
+            <div id="apptClientNewWrap" style="display:none">
+              <input type="text" id="addApptName" class="field-input" placeholder="שם מלא" style="margin-bottom:8px"/>
+              <input type="tel" id="addApptPhone" class="field-input" placeholder="05X-XXXXXXX"/>
+            </div>
+            <div id="apptSelectedClient" style="display:none;background:#e8f8ef;border-radius:10px;padding:10px 14px;margin-top:8px;font-size:14px;color:#1a6e3a;font-weight:600"></div>
           </div>
           <div class="form-field">
             <label>הערות (אופציונלי)</label>

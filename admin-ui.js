@@ -728,15 +728,76 @@ function updateDateInSheets(id, newDate, newTime) {
   document.body.appendChild(s);
 }
 
+let _apptClientMode = 'existing';
+let _apptSelectedClient = null;
+
+function setApptClientMode(mode) {
+  _apptClientMode = mode;
+  _apptSelectedClient = null;
+  document.getElementById('apptSelectedClient').style.display = 'none';
+  document.getElementById('apptClientExistingWrap').style.display = mode === 'existing' ? '' : 'none';
+  document.getElementById('apptClientNewWrap').style.display = mode === 'new' ? '' : 'none';
+  document.getElementById('apptClientModeExisting').style.background = mode === 'existing' ? 'var(--dark-pink)' : '#fff';
+  document.getElementById('apptClientModeExisting').style.color = mode === 'existing' ? '#fff' : '#888';
+  document.getElementById('apptClientModeExisting').style.borderColor = mode === 'existing' ? 'var(--dark-pink)' : '#e0e0e0';
+  document.getElementById('apptClientModeNew').style.background = mode === 'new' ? 'var(--dark-pink)' : '#fff';
+  document.getElementById('apptClientModeNew').style.color = mode === 'new' ? '#fff' : '#888';
+  document.getElementById('apptClientModeNew').style.borderColor = mode === 'new' ? 'var(--dark-pink)' : '#e0e0e0';
+  if (mode === 'existing') filterApptClients('');
+}
+
+function filterApptClients(q) {
+  const clients = DB.get('clients_cache', null) || [];
+  const filtered = q
+    ? clients.filter(c => c.name.toLowerCase().includes(q.toLowerCase()) || c.phone.includes(q))
+    : clients.slice(0, 30);
+  const list = document.getElementById('addApptClientList');
+  if (!list) return;
+  if (filtered.length === 0) {
+    list.innerHTML = '<p style="padding:10px;color:#aaa;font-size:13px;text-align:center">לא נמצאו לקוחות</p>';
+    return;
+  }
+  list.innerHTML = filtered.map(c => `
+    <div onclick="selectApptClient('${sanitize(c.name)}','${sanitize(c.phone)}')"
+      style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5e8ed;font-size:14px;display:flex;justify-content:space-between;align-items:center"
+      onmouseover="this.style.background='#fdf0f5'" onmouseout="this.style.background=''">
+      <strong>${sanitize(c.name)}</strong>
+      <span style="color:#aaa;font-size:12px">${sanitize(c.phone)}</span>
+    </div>
+  `).join('');
+}
+
+function selectApptClient(name, phone) {
+  _apptSelectedClient = { name, phone };
+  document.getElementById('addApptClientSearch').value = name;
+  document.getElementById('addApptClientList').innerHTML = '';
+  const sel = document.getElementById('apptSelectedClient');
+  sel.style.display = '';
+  sel.textContent = `✓ ${name} | ${phone}`;
+}
+
 function openAddApptModal(dateStr) {
   const modal = document.getElementById('addApptModal');
   modal.style.display = 'flex';
   document.getElementById('addApptDate').value = dateStr || todayStr();
   document.getElementById('addApptTime').value = '';
   document.getElementById('addApptTimeEnd').value = '';
-  document.getElementById('addApptName').value = '';
-  document.getElementById('addApptPhone').value = '';
   document.getElementById('addApptNotes').value = '';
+  _apptSelectedClient = null;
+  document.getElementById('addApptClientSearch').value = '';
+  document.getElementById('addApptClientList').innerHTML = '';
+  document.getElementById('apptSelectedClient').style.display = 'none';
+  if (document.getElementById('addApptName')) document.getElementById('addApptName').value = '';
+  if (document.getElementById('addApptPhone')) document.getElementById('addApptPhone').value = '';
+  setApptClientMode('existing');
+  // טען לקוחות אם אין ב-cache
+  if (!DB.get('clients_cache', null)) {
+    loadClientsFromSheets().then(clients => {
+      if (clients && clients.length > 0) { DB.set('clients_cache', clients); filterApptClients(''); }
+    });
+  } else {
+    filterApptClients('');
+  }
 
   // רנדר checkboxes לשירותים
   const services = getServices();
@@ -829,16 +890,24 @@ function submitAddAppt() {
   const date     = document.getElementById('addApptDate').value;
   const time     = document.getElementById('addApptTime').value;
   const timeEnd  = document.getElementById('addApptTimeEnd').value;
-  const name     = document.getElementById('addApptName').value.trim();
-  const phone    = document.getElementById('addApptPhone').value.trim();
   const notes    = document.getElementById('addApptNotes').value.trim();
   const selected = _getSelectedServices();
+
+  let name, phone;
+  if (_apptClientMode === 'existing') {
+    if (!_apptSelectedClient) { showToast('אנא בחרי לקוחה מהרשימה', '#e05'); return; }
+    name = _apptSelectedClient.name;
+    phone = _apptSelectedClient.phone;
+  } else {
+    name  = document.getElementById('addApptName').value.trim();
+    phone = document.getElementById('addApptPhone').value.trim();
+    if (!name || !phone) { showToast('אנא מלאי שם וטלפון', '#e05'); return; }
+  }
 
   if (!date || !time || !name || !phone) { showToast('אנא מלאי את כל השדות', '#e05'); return; }
   if (selected.length === 0) { showToast('אנא בחרי שירות אחד לפחות', '#e05'); return; }
   if (timeEnd && timeEnd <= time) { showToast('שעת הסיום חייבת להיות אחרי שעת ההתחלה', '#e05'); return; }
 
-  // חשב משך: אם הוזנה שעת סיום ידנית - קח אותה, אחרת סכום משכי השירותים
   let duration;
   if (timeEnd) {
     const [sh, sm] = time.split(':').map(Number);
@@ -856,12 +925,30 @@ function submitAddAppt() {
   const appts = getAppointments();
   appts.push(appt);
   saveAppointments(appts);
-  saveToSheets(appt);
-  closeAddApptModal();
-  adminSelectedDate = date;
-  if (calView === 'week') renderWeekView();
-  else { renderAdminCalendar(); adminSelectDay(date); }
-  _showApptConfirmPopup(appt);
+
+  // אם לקוח חדש - שמור ב-DB
+  if (_apptClientMode === 'new') {
+    saveClientToSheets(name, phone);
+    const cached = DB.get('clients_cache', null) || [];
+    if (!cached.some(c => c.phone === phone)) {
+      cached.unshift({ name, phone });
+      DB.set('clients_cache', cached);
+    }
+  }
+
+  saveToSheetsWithConflictCheck(appt, (conflict) => {
+    if (conflict) {
+      saveAppointments(getAppointments().filter(a => a.id !== appt.id));
+      showToast('❌ השעה כבר תפוסה, אנא בחרי שעה אחרת', '#e05');
+      _loadAdminSlots();
+      return;
+    }
+    closeAddApptModal();
+    adminSelectedDate = date;
+    if (calView === 'week') renderWeekView();
+    else { renderAdminCalendar(); adminSelectDay(date); }
+    _showApptConfirmPopup(appt);
+  });
 }
 
 function _showApptConfirmPopup(appt) {
