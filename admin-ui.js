@@ -14,28 +14,41 @@ function closeGlobalSearch() {
 function runGlobalSearch(q) {
   const results = document.getElementById('globalSearchResults');
   if (!q.trim()) { results.innerHTML = ''; return; }
+
+  const cached = DB.get('clients_cache', null);
+  if (!cached || cached.length === 0) {
+    results.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px;font-size:14px">טוען...</p>';
+    loadClientsFromSheets().then(clients => {
+      if (clients && clients.length > 0) {
+        DB.set('clients_cache', clients);
+      }
+      _renderGlobalSearchResults(q, clients || []);
+    });
+    return;
+  }
+  _renderGlobalSearchResults(q, cached);
+}
+
+function _renderGlobalSearchResults(q, clients) {
+  const results = document.getElementById('globalSearchResults');
+  if (!results) return;
   const ql = q.trim().toLowerCase();
-
-  // חיפוש לקוחות
-  const clients = (DB.get('clients_cache', null) || []).filter(c =>
-    c.name.toLowerCase().includes(ql) || c.phone.includes(ql)
+  const filtered = clients.filter(c =>
+    c.name.toLowerCase().includes(ql) || String(c.phone).includes(ql)
   );
-
-  // תורים של אותם לקוחות
   const appts = getAppointments();
   const norm = p => String(p || '').replace(/\D/g, '');
 
-  if (clients.length === 0) {
+  if (filtered.length === 0) {
     results.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px;font-size:14px">לא נמצאו תוצאות</p>';
     return;
   }
 
-  results.innerHTML = clients.map(c => {
+  results.innerHTML = filtered.map(c => {
     const clientAppts = appts
       .filter(a => norm(a.clientPhone) === norm(c.phone) && a.status !== 'cancelled')
       .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time))
       .slice(0, 3);
-    const lastAppt = clientAppts[0];
     return `
       <div style="background:#fdf8fa;border-radius:14px;padding:14px 16px;margin-bottom:10px;border:1.5px solid #f0e0e8">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${clientAppts.length ? '10px' : '0'}">
