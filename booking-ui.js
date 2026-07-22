@@ -626,14 +626,20 @@ function renderSummaryMini() {
 
 function submitBooking(e) {
   e.preventDefault();
+  const submitBtn = document.querySelector('#bookingForm button[type="submit"]');
+  if (submitBtn && submitBtn.disabled) return;
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'שולח...'; }
+
   const name = document.getElementById('clientName').value.trim();
   const phone = document.getElementById('clientPhone').value.trim();
   const notes = document.getElementById('clientNotes').value.trim();
 
-  if (!name) { showFormError('אנא הכניסי שם מלא'); return; }
-  if (name.trim().split(/\s+/).length < 2) { showFormError('אנא הכניסי שם פרטי ושם משפחה'); return; }
-  if (!phone) { showFormError('אנא הכניסי מספר טלפון'); return; }
-  if (!/^[0-9+\-\s]{9,15}$/.test(phone)) { showFormError('מספר טלפון לא תקין'); return; }
+  const resetBtn = () => { if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'קביעת תור 💅'; } };
+
+  if (!name) { showFormError('אנא הכניסי שם מלא'); resetBtn(); return; }
+  if (name.trim().split(/\s+/).length < 2) { showFormError('אנא הכניסי שם פרטי ושם משפחה'); resetBtn(); return; }
+  if (!phone) { showFormError('אנא הכניסי מספר טלפון'); resetBtn(); return; }
+  if (!/^[0-9+\-\s]{9,15}$/.test(phone)) { showFormError('מספר טלפון לא תקין'); resetBtn(); return; }
 
   const totalDuration = selected.services.reduce((sum, s) => sum + s.duration, 0);
 
@@ -659,6 +665,7 @@ function submitBooking(e) {
   saveToSheetsWithConflictCheck(appt, (conflict) => {
     if (conflict) {
       showFormError('השעה שבחרת נתפסה זה עתה על ידי מישהו אחר. אנא בחרי שעה אחרת');
+      resetBtn();
       selected.time = null;
       document.getElementById('toStep4').disabled = true;
       showStep(3);
