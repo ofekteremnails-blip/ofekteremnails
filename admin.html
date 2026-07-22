@@ -115,34 +115,21 @@
         </button>
       </header>
 
-      <!-- ── GLOBAL CLIENT SEARCH OVERLAY ── -->
-      <div id="globalSearchOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;align-items:flex-start;justify-content:center;padding:20px;padding-top:60px;overflow-y:auto">
-        <div style="background:#fff;border-radius:20px;padding:24px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-            <div style="flex:1;display:flex;align-items:center;gap:8px;background:#fdf8fa;border:1.5px solid #f0e0e8;border-radius:12px;padding:10px 14px">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#b76e79" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input type="text" id="globalSearchInput" placeholder="חיפוש לקוח לפי שם..." autofocus
-                style="border:none;background:none;outline:none;font-size:15px;font-family:Heebo,sans-serif;width:100%;direction:rtl"
-                oninput="runGlobalSearch(this.value)"/>
-            </div>
-            <button onclick="closeGlobalSearch()" style="width:38px;height:38px;border:none;background:#f5f5f5;border-radius:50%;cursor:pointer;font-size:18px;flex-shrink:0">✕</button>
-          </div>
-          <div id="globalSearchResults"></div>
-        </div>
-      </div>
-
       <!-- ── DASHBOARD ── -->
       <div class="panel active" id="panel-dashboard">
         <div class="panel-header">
           <h1 class="panel-title">לוח בקרה</h1>
           <div style="display:flex;gap:8px">
-          <button class="btn-icon-round" onclick="openGlobalSearch()" title="חיפוש לקוח">
+          <button class="btn-icon-round" onclick="togglePanelSearch('dashboard')" title="חיפוש לקוח">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
           </button>
           <button class="btn-icon-round" onclick="syncSheets()" title="סנכרן">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
           </button>
           </div>
+        </div>
+        <div id="panelSearch-dashboard" style="display:none;padding:0 0 12px">
+          <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="panelSearchInput-dashboard" placeholder="חיפוש לקוחה..." oninput="runPanelSearch('dashboard',this.value)" autocomplete="off"/></div>
         </div>
 
         <section class="dash-section" id="pendingSection">
@@ -244,12 +231,15 @@
         <div class="panel-header">
           <h1 class="panel-title">יומן תורים</h1>
           <div style="display:flex;gap:8px">
-            <button class="btn-icon-round" onclick="openGlobalSearch()" title="חיפוש לקוח">
+            <button class="btn-icon-round" onclick="togglePanelSearch('calendar')" title="חיפוש לקוח">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             </button>
             <button class="btn-icon-round" id="calViewMonth" onclick="setCalView('month')" title="תצוגת חודש" style="background:var(--dark-pink);color:#fff">חודש</button>
             <button class="btn-icon-round" id="calViewWeek" onclick="setCalView('week')" title="תצוגת שבוע">שבוע</button>
           </div>
+        </div>
+        <div id="panelSearch-calendar" style="display:none;padding:0 0 12px">
+          <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="panelSearchInput-calendar" placeholder="חיפוש לקוחה..." oninput="runPanelSearch('calendar',this.value)" autocomplete="off"/></div>
         </div>
 
         <!-- תצוגת חודש -->
@@ -348,13 +338,16 @@
         <div class="panel-header">
           <h1 class="panel-title">כל התורים</h1>
           <div style="display:flex;gap:8px">
-          <button class="btn-icon-round" onclick="openGlobalSearch()" title="חיפוש לקוח">
+          <button class="btn-icon-round" onclick="togglePanelSearch('appointments')" title="חיפוש לקוח">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
           </button>
           <button class="btn-icon-round" onclick="openAddApptModal()" title="הוסף תור" style="background:#25D366;color:#fff">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
           </div>
+        </div>
+        <div id="panelSearch-appointments" style="display:none;padding:0 0 12px">
+          <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="panelSearchInput-appointments" placeholder="חיפוש לקוחה..." oninput="runPanelSearch('appointments',this.value)" autocomplete="off"/></div>
         </div>
         
         <div class="filters-bar">
@@ -376,7 +369,7 @@
         <div class="panel-header">
           <h1 class="panel-title">לקוחות</h1>
           <div style="display:flex;gap:8px">
-            <button class="btn-icon-round" onclick="openGlobalSearch()" title="חיפוש לקוח">
+            <button class="btn-icon-round" onclick="togglePanelSearch('clients')" title="חיפוש לקוח">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             </button>
             <button class="btn-icon-round" onclick="removeDuplicates()" title="מחק כפילויות" style="background:#f0a500">

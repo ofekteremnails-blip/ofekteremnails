@@ -1,87 +1,82 @@
-﻿// ── GLOBAL CLIENT SEARCH ──
-function openGlobalSearch() {
-  const overlay = document.getElementById('globalSearchOverlay');
-  overlay.style.display = 'flex';
-  setTimeout(() => document.getElementById('globalSearchInput').focus(), 50);
-  document.getElementById('globalSearchInput').value = '';
-  document.getElementById('globalSearchResults').innerHTML = '';
+﻿// ── PANEL SEARCH ──
+function togglePanelSearch(panel) {
+  const wrap = document.getElementById('panelSearch-' + panel);
+  const input = document.getElementById('panelSearchInput-' + panel);
+  if (!wrap) return;
+  const isOpen = wrap.style.display !== 'none';
+  wrap.style.display = isOpen ? 'none' : '';
+  if (!isOpen) setTimeout(() => input && input.focus(), 50);
+  else if (input) { input.value = ''; runPanelSearch(panel, ''); }
 }
 
-function closeGlobalSearch() {
-  document.getElementById('globalSearchOverlay').style.display = 'none';
-}
-
-function runGlobalSearch(q) {
-  const results = document.getElementById('globalSearchResults');
-  if (!q.trim()) { results.innerHTML = ''; return; }
-
-  const cached = DB.get('clients_cache', null);
-  if (!cached || cached.length === 0) {
-    results.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px;font-size:14px">טוען...</p>';
-    loadClientsFromSheets().then(clients => {
-      if (clients && clients.length > 0) {
-        DB.set('clients_cache', clients);
-      }
-      _renderGlobalSearchResults(q, clients || []);
-    });
-    return;
-  }
-  _renderGlobalSearchResults(q, cached);
-}
-
-function _renderGlobalSearchResults(q, clients) {
-  const results = document.getElementById('globalSearchResults');
-  if (!results) return;
+function runPanelSearch(panel, q) {
   const ql = q.trim().toLowerCase();
-  const filtered = clients.filter(c =>
-    c.name.toLowerCase().includes(ql) || String(c.phone).includes(ql)
-  );
-  const appts = getAppointments();
-  const norm = p => String(p || '').replace(/\D/g, '');
 
-  if (filtered.length === 0) {
-    results.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px;font-size:14px">לא נמצאו תוצאות</p>';
+  if (panel === 'clients') {
+    // פשוט - מעדכן את שדה החיפוש הקיים ומפעיל את הסינון
+    const clientSearchEl = document.getElementById('clientSearch');
+    if (clientSearchEl) {
+      clientSearchEl.value = q;
+      renderClientsList();
+      if (ql) setTimeout(() => {
+        const first = document.querySelector('#clientsList .client-card');
+        if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 200);
+    }
     return;
   }
 
-  results.innerHTML = filtered.map(c => {
-    const clientAppts = appts
-      .filter(a => norm(a.clientPhone) === norm(c.phone) && a.status !== 'cancelled')
-      .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time))
-      .slice(0, 3);
-    return `
-      <div style="background:#fdf8fa;border-radius:14px;padding:14px 16px;margin-bottom:10px;border:1.5px solid #f0e0e8">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${clientAppts.length ? '10px' : '0'}">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--pink),var(--dark-pink));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;flex-shrink:0">${sanitize(c.name.charAt(0))}</div>
-            <div>
-              <div style="font-weight:700;font-size:15px;color:var(--dark)">${sanitize(c.name)}</div>
-              <a href="tel:${sanitize(c.phone)}" style="font-size:13px;color:#b76e79;text-decoration:none">${sanitize(c.phone)}</a>
-            </div>
-          </div>
-          <a href="https://wa.me/${toWAPhone(c.phone)}" target="_blank"
-            style="width:34px;height:34px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg viewBox="0 0 24 24" fill="#fff" width="18" height="18"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.845L0 24l6.335-1.508A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.374l-.36-.214-3.727.977.994-3.634-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
-          </a>
-        </div>
-        ${clientAppts.length ? `
-          <div style="display:flex;flex-direction:column;gap:6px">
-            ${clientAppts.map(a => `
-              <div style="background:#fff;border-radius:8px;padding:8px 10px;font-size:13px;border-right:3px solid ${STATUS_COLORS[a.status]};display:flex;justify-content:space-between;align-items:center">
-                <span style="color:var(--dark)">${sanitize(formatDate(a.date))} ב-${sanitize(a.time)}</span>
-                <span style="color:#888">${sanitize(a.serviceName)}</span>
-              </div>
-            `).join('')}
-          </div>
-        ` : '<p style="font-size:12px;color:#aaa;margin:0">אין תורים</p>'}
-      </div>
-    `;
-  }).join('');
+  if (panel === 'appointments') {
+    const all = getAppointments();
+    const filtered = ql
+      ? all.filter(a => a.clientName.toLowerCase().includes(ql) || a.clientPhone.includes(ql))
+      : all;
+    const today = todayStr();
+    const future = filtered.filter(a => a.date >= today).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    const past   = filtered.filter(a => a.date <  today).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+    document.getElementById('allApptList').innerHTML = [...future, ...past].length
+      ? [...future, ...past].map(a => apptCard(a, true)).join('')
+      : emptyMsg('לא נמצאו תורים');
+    if (ql) setTimeout(() => {
+      const first = document.querySelector('#allApptList .appt-card');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    return;
+  }
+
+  if (panel === 'dashboard') {
+    if (!ql) return;
+    const match = getAppointments()
+      .filter(a => a.clientName.toLowerCase().includes(ql) || a.clientPhone.includes(ql))
+      .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
+    if (!match) { showToast('לא נמצאו תורים', '#e05'); return; }
+    setTimeout(() => {
+      const card = document.querySelector(`#panel-dashboard .appt-card[data-id="${match.id}"]`);
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    return;
+  }
+
+  if (panel === 'calendar') {
+    if (!ql) return;
+    const match = getAppointments()
+      .filter(a => a.clientName.toLowerCase().includes(ql) || a.clientPhone.includes(ql))
+      .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
+    if (!match) { showToast('לא נמצאו תורים', '#e05'); return; }
+    adminSelectDay(match.date);
+    setTimeout(() => {
+      const card = document.querySelector(`#adminDayAppts .appt-card[data-id="${match.id}"]`);
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 200);
+    return;
+  }
 }
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeGlobalSearch();
-});
+// ── GLOBAL CLIENT SEARCH (kept for backward compat) ──
+function openGlobalSearch() {}
+function closeGlobalSearch() {}
+function runGlobalSearch() {}
+function _renderGlobalSearchResults() {}
 
 
 const BIOMETRIC_KEY = 'biometricCredentialId';
