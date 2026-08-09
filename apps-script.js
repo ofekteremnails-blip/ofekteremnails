@@ -292,7 +292,7 @@ function hasConflict(date, time, duration) {
   return false;
 }
 
-// בדיקה למנהל - חוסם רק אם יש תור confirmed אחר באותה שעה (לא pending)
+// בדיקה למנהל - חוסם אם יש תור confirmed או pending באותה שעה
 function hasConfirmedConflict(date, time, duration) {
   if (getSheet().getLastRow() <= 1) return false;
   const rows = getSheet().getRange(2, 1, getSheet().getLastRow() - 1, 9).getValues();
@@ -301,7 +301,7 @@ function hasConfirmedConflict(date, time, duration) {
   for (const row of rows) {
     if (String(row[2]) !== String(date)) continue;
     const status = String(row[7]);
-    if (status === 'cancelled' || status === 'pending') continue;
+    if (status === 'cancelled') continue;
     const s = timeToMins(String(row[3]));
     const e = s + (Number(row[8]) || 60);
     if (newStart < e && newEnd > s) return true;

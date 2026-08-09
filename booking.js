@@ -123,9 +123,15 @@ async function loadFromSheets() {
     const script = document.createElement('script');
     script.id = 'jsonpScript';
     script.src = url;
-    script.onerror = () => { resolve(null); };
+    script.onerror = () => { delete window[callbackName]; script.remove(); resolve(null); };
     document.body.appendChild(script);
-    setTimeout(() => { delete window[callbackName]; resolve(null); }, 8000);
+    setTimeout(() => {
+      if (window[callbackName]) {
+        delete window[callbackName];
+        script.remove();
+        resolve(null);
+      }
+    }, 8000);
   });
 }
 

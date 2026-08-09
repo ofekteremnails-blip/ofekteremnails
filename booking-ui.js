@@ -182,7 +182,7 @@ function loadMyAppointments(phone) {
           <div class="my-appt-service">💅 ${sanitize(a.serviceName)}</div>
           <div class="my-appt-datetime">📅 ${sanitize(formatDate(a.date))} · 🕐 ${sanitize(a.time)}</div>
           <div class="my-appt-actions">
-            <a href="https://wa.me/${waPhone}?text=${changeMsg}" target="_blank" class="my-appt-btn change">✏️ שינוי תור</a>
+            <a href="https://wa.me/${waPhone}?text=${changeMsg}" target="_blank" rel="noopener noreferrer" class="my-appt-btn change">✏️ שינוי תור</a>
             <button onclick="cancelApptBooking('${sanitize(a.id)}', this)" class="my-appt-btn cancel">✕ ביטול</button>
           </div>
         </div>`;
@@ -231,24 +231,38 @@ function loadMyAppointments(phone) {
 }
 
 function cancelApptBooking(id, btn) {
-  if (!confirm('בטוחה שתרצי לבטל את התור?')) return;
-  btn.textContent = 'מבטל...';
-  btn.disabled = true;
-  const cb = 'ca' + Date.now();
-  const url = WEBAPP_URL + '?action=updateStatus&callback=' + cb + '&id=' + encodeURIComponent(id) + '&status=cancelled';
-  window[cb] = () => {
-    delete window[cb]; document.getElementById(cb)?.remove();
-    const card = btn.closest('.my-appt-item');
-    if (card) {
-      card.style.opacity = '0.5';
-      card.innerHTML = '<div style="text-align:center;padding:12px;color:#888">✅ התור בוטל בהצלחה</div>';
-      setTimeout(() => { card.remove(); loadMyAppointments(currentClient.phone); }, 2000);
-    }
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:28px 24px;max-width:300px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.18)">
+      <p style="font-size:16px;font-weight:600;color:#3d2030;margin-bottom:20px">בטוחה שתרצי לבטל את התור?</p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button id="_cancelYes" style="padding:10px 24px;background:#e05;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">כן, בטלי</button>
+        <button id="_cancelNo" style="padding:10px 24px;background:none;border:1.5px solid #ddd;color:#888;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit">חזרה</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#_cancelNo').onclick = () => overlay.remove();
+  overlay.querySelector('#_cancelYes').onclick = () => {
+    overlay.remove();
+    btn.textContent = 'מבטל...';
+    btn.disabled = true;
+    const cb = 'ca' + Date.now();
+    const url = WEBAPP_URL + '?action=updateStatus&callback=' + cb + '&id=' + encodeURIComponent(id) + '&status=cancelled';
+    window[cb] = () => {
+      delete window[cb]; document.getElementById(cb)?.remove();
+      const card = btn.closest('.my-appt-item');
+      if (card) {
+        card.style.opacity = '0.5';
+        card.innerHTML = '<div style="text-align:center;padding:12px;color:#888">✅ התור בוטל בהצלחה</div>';
+        setTimeout(() => { card.remove(); loadMyAppointments(currentClient.phone); }, 2000);
+      }
+    };
+    const s = document.createElement('script');
+    s.id = cb; s.src = url;
+    s.onerror = () => { delete window[cb]; btn.textContent = '✕ ביטול'; btn.disabled = false; };
+    document.body.appendChild(s);
   };
-  const s = document.createElement('script');
-  s.id = cb; s.src = url;
-  s.onerror = () => { delete window[cb]; btn.textContent = '✕ ביטול'; btn.disabled = false; alert('שגיאה, נסי שוב'); };
-  document.body.appendChild(s);
 }
 
 function toggleMyAppointments() {
@@ -321,11 +335,14 @@ function showStep(n) {
 function bindSteps() {
   document.getElementById('toStep2').addEventListener('click', () => {
     showStep(2);
-    // טען תורים מ-Sheets לפני הצגת הלוח שנה
     const grid = document.getElementById('calGrid');
     grid.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px">טוען זמינות...</p>';
     loadFromSheets().then(appts => {
-      _sheetsAppointments = appts || getAppointments();
+      if (!appts) {
+        grid.innerHTML = '<p style="text-align:center;color:#e05;padding:20px">שגיאה בטעינת הנתונים. <button onclick="document.getElementById(\'toStep2\').click()" style="color:var(--dark-pink);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:700">נסי שוב</button></p>';
+        return;
+      }
+      _sheetsAppointments = appts;
       renderCalendar();
     });
   });
@@ -335,15 +352,31 @@ function bindSteps() {
     const grid = document.getElementById('slotsGrid');
     grid.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px">טוען שעות פנויות...</p>';
     document.getElementById('toStep4').disabled = true;
-    // רענן מ-Sheets בכל כניסה לשלב 3
     loadFromSheets().then(appts => {
-      _sheetsAppointments = appts || getAppointments();
+      if (!appts) {
+        grid.innerHTML = '<p style="text-align:center;color:#e05;padding:20px">שגיאה בטעינת הנתונים. <button onclick="document.getElementById(\'toStep3\').click()" style="color:var(--dark-pink);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:700">נסי שוב</button></p>';
+        return;
+      }
+      _sheetsAppointments = appts;
       renderSlots();
     });
   });
   document.getElementById('toStep2Back').addEventListener('click', () => showStep(2));
   document.getElementById('toStep4').addEventListener('click', () => { showStep(4); renderSummaryMini(); prefillClientDetails(); });
-  document.getElementById('toStep3Back').addEventListener('click', () => showStep(3));
+  document.getElementById('toStep3Back').addEventListener('click', () => {
+    showStep(3);
+    const grid = document.getElementById('slotsGrid');
+    grid.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px">טוען שעות פנויות...</p>';
+    document.getElementById('toStep4').disabled = true;
+    loadFromSheets().then(appts => {
+      if (!appts) {
+        grid.innerHTML = '<p style="text-align:center;color:#e05;padding:20px">שגיאה בטעינת הנתונים. <button onclick="document.getElementById(\'toStep3Back\').click()" style="color:var(--dark-pink);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:700">נסי שוב</button></p>';
+        return;
+      }
+      _sheetsAppointments = appts;
+      renderSlots();
+    });
+  });
   document.getElementById('bookingForm').addEventListener('submit', submitBooking);
 }
 
