@@ -474,3 +474,40 @@ function sendReminderToSheets(appt) {
   s.id = cb; s.src = url;
   document.body.appendChild(s);
 }
+
+// Booking availability is separate from the full administrative appointment cache.
+let availabilityRequestId = 0;
+async function loadMonthAvailability(year, month) {
+  const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const result = await new Promise(resolve => {
+      const cb = 'availability_' + Date.now() + '_' + (++availabilityRequestId);
+      const script = document.createElement('script');
+      let settled = false;
+      const finish = (value, reason) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        script.remove();
+        // A timed-out JSONP response can still execute after its script is removed.
+        window[cb] = () => {};
+        setTimeout(() => { delete window[cb]; }, 60000);
+        if (reason) console.warn('Availability load failed', { month: monthKey, attempt: attempt + 1, reason });
+        resolve(value);
+      };
+      window[cb] = data => {
+        const valid = data && data.success === true && data.month === monthKey
+          && Array.isArray(data.appointments) && data.appointments.every(a =>
+            a && typeof a.date === 'string' && a.date.startsWith(monthKey + '-')
+            && /^\d{2}:\d{2}$/.test(a.time) && Number.isFinite(a.duration) && a.duration > 0);
+        finish(valid ? data.appointments : null, valid ? null : 'invalid response or server error');
+      };
+      script.onerror = () => finish(null, 'network error');
+      script.src = WEBAPP_URL + '?action=availability&month=' + monthKey + '&callback=' + cb;
+      const timer = setTimeout(() => finish(null, 'timeout'), 25000);
+      document.body.appendChild(script);
+    });
+    if (result !== null) return result;
+  }
+  return null;
+}

@@ -332,55 +332,47 @@ function showStep(n) {
   }, 50);
 }
 
+let availabilityViewRequest = 0;
+let loadedAvailabilityMonth = null;
+
+async function refreshAvailability(step = 2) {
+  const request = ++availabilityViewRequest;
+  const year = calYear, month = calMonth;
+  const grid = document.getElementById(step === 2 ? 'calGrid' : 'slotsGrid');
+  selected.time = null;
+  document.getElementById('toStep4').disabled = true;
+  document.getElementById('toStep3').disabled = true;
+  document.getElementById('noSlots').classList.add('hidden');
+  document.getElementById('waitlistOffer')?.classList.add('hidden');
+  if (step === 2) {
+    selected.date = null;
+    _sheetsAppointments = null;
+    loadedAvailabilityMonth = null;
+    renderCalendar();
+  }
+  grid.textContent = 'טוען זמינות...';
+  const appts = await loadMonthAvailability(year, month);
+  if (request !== availabilityViewRequest || year !== calYear || month !== calMonth) return;
+  if (appts === null) {
+    grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#e05;padding:20px">לא הצלחנו לטעון את הזמינות. <button type="button" onclick="refreshAvailability(' + step + ')">נסי שוב</button></p>';
+    return;
+  }
+  _sheetsAppointments = appts;
+  loadedAvailabilityMonth = `${year}-${month}`;
+  if (step === 2) renderCalendar();
+  else renderSlots();
+}
+
 function bindSteps() {
-  document.getElementById('toStep2').addEventListener('click', () => {
-    showStep(2);
-    const grid = document.getElementById('calGrid');
-    grid.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px">טוען זמינות...</p>';
-    loadFromSheets().then(appts => {
-      if (!appts) {
-        grid.innerHTML = '<p style="text-align:center;color:#e05;padding:20px">שגיאה בטעינת הנתונים. <button onclick="document.getElementById(\'toStep2\').click()" style="color:var(--dark-pink);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:700">נסי שוב</button></p>';
-        return;
-      }
-      _sheetsAppointments = appts;
-      renderCalendar();
-    });
-  });
-  document.getElementById('toStep1Back').addEventListener('click', () => showStep(1));
-  document.getElementById('toStep3').addEventListener('click', () => {
-    showStep(3);
-    const grid = document.getElementById('slotsGrid');
-    grid.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px">טוען שעות פנויות...</p>';
-    document.getElementById('toStep4').disabled = true;
-    loadFromSheets().then(appts => {
-      if (!appts) {
-        grid.innerHTML = '<p style="text-align:center;color:#e05;padding:20px">שגיאה בטעינת הנתונים. <button onclick="document.getElementById(\'toStep3\').click()" style="color:var(--dark-pink);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:700">נסי שוב</button></p>';
-        return;
-      }
-      _sheetsAppointments = appts;
-      renderSlots();
-    });
-  });
-  document.getElementById('toStep2Back').addEventListener('click', () => showStep(2));
+  document.getElementById('toStep2').addEventListener('click', () => { showStep(2); refreshAvailability(2); });
+  document.getElementById('toStep1Back').addEventListener('click', () => { availabilityViewRequest++; showStep(1); });
+  document.getElementById('toStep3').addEventListener('click', () => { showStep(3); refreshAvailability(3); });
+  document.getElementById('toStep2Back').addEventListener('click', () => { showStep(2); refreshAvailability(2); });
   document.getElementById('toStep4').addEventListener('click', () => { showStep(4); renderSummaryMini(); prefillClientDetails(); });
-  document.getElementById('toStep3Back').addEventListener('click', () => {
-    showStep(3);
-    const grid = document.getElementById('slotsGrid');
-    grid.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px">טוען שעות פנויות...</p>';
-    document.getElementById('toStep4').disabled = true;
-    loadFromSheets().then(appts => {
-      if (!appts) {
-        grid.innerHTML = '<p style="text-align:center;color:#e05;padding:20px">שגיאה בטעינת הנתונים. <button onclick="document.getElementById(\'toStep3Back\').click()" style="color:var(--dark-pink);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:700">נסי שוב</button></p>';
-        return;
-      }
-      _sheetsAppointments = appts;
-      renderSlots();
-    });
-  });
+  document.getElementById('toStep3Back').addEventListener('click', () => { showStep(3); refreshAvailability(3); });
   document.getElementById('bookingForm').addEventListener('submit', submitBooking);
 }
 
-// ── STEP 1: SERVICES ──
 function renderServices() {
   const services = getServices();
   const container = document.getElementById('servicesList');
@@ -462,7 +454,7 @@ function renderCalendar() {
     const isWork = isWorkDay(dateStr);
     const isSelected = selected.date === dateStr;
     let cls = 'cal-cell';
-    if (isPast || !isWork) {
+    if (isPast || !isWork || loadedAvailabilityMonth !== `${calYear}-${calMonth}`) {
       cls += ' disabled';
       html += `<div class="${cls}">${d}</div>`;
     } else {
@@ -480,11 +472,11 @@ function renderCalendar() {
 
   document.getElementById('prevMonth').onclick = () => {
     calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
-    renderCalendar();
+    refreshAvailability(2);
   };
   document.getElementById('nextMonth').onclick = () => {
     calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
-    renderCalendar();
+    refreshAvailability(2);
   };
 }
 
@@ -496,6 +488,7 @@ function showFullDayPopup(dateStr) {
   for (let i = 1; i <= 60; i++) {
     search.setDate(search.getDate() + 1);
     const d = search.getFullYear() + '-' + String(search.getMonth()+1).padStart(2,'0') + '-' + String(search.getDate()).padStart(2,'0');
+    if (search.getFullYear() !== calYear || search.getMonth() !== calMonth) break;
     if (isWorkDay(d) && getAvailableSlots(d, totalDuration, appts).length > 0) { nextFree = d; break; }
   }
 
@@ -513,7 +506,7 @@ function showFullDayPopup(dateStr) {
       ${nextFree
         ? `<button onclick="jumpToDate('${nextFree}')" style="width:100%;padding:13px;background:#6b4c55;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px">📅 קפצי לתאריך הפנוי</button>
            <p style="font-size:12px;color:#aaa;margin-bottom:14px">${formatDate(nextFree)}</p>`
-        : `<p style="font-size:13px;color:#cc0033;margin-bottom:20px">לא נמצאו תאריכים פנויים בקרוב</p>`
+        : `<p style="font-size:13px;color:#cc0033;margin-bottom:20px">לא נמצאו תאריכים פנויים נוספים בחודש הזה</p>`
       }
       <button onclick="document.getElementById('fullDayPopup').remove()" style="background:none;border:1px solid #ddd;color:#888;padding:9px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">סגירה</button>
     </div>`;
@@ -532,6 +525,7 @@ function jumpToDate(dateStr) {
 }
 
 function selectDate(dateStr) {
+  if (loadedAvailabilityMonth !== `${calYear}-${calMonth}`) return;
   selected.date = dateStr;
   selected.time = null;
   document.getElementById('toStep3').disabled = false;
@@ -702,10 +696,7 @@ function submitBooking(e) {
       selected.time = null;
       document.getElementById('toStep4').disabled = true;
       showStep(3);
-      loadFromSheets().then(appts => {
-        _sheetsAppointments = appts || getAppointments();
-        renderSlots();
-      });
+      refreshAvailability(3);
       return;
     }
     // עדכן את ה-cache המקומי עם התור החדש

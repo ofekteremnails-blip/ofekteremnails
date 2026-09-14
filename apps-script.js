@@ -59,6 +59,38 @@ function doGet(e) {
   const action   = e.parameter.action   || 'load';
   const callback = e.parameter.callback || null;
 
+  if (action === 'availability') {
+    let result;
+    try {
+      const month = String(e.parameter.month || '');
+      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new Error('Invalid month');
+      const sheet = getSheet();
+      const tz = sheet.getParent().getSpreadsheetTimeZone();
+      const rows = sheet.getLastRow() > 1
+        ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).getValues() : [];
+      const appointments = [];
+      for (const row of rows) {
+        if (!row[0] || String(row[7]) === 'cancelled') continue;
+        const date = row[2] instanceof Date
+          ? Utilities.formatDate(row[2], tz, 'yyyy-MM-dd') : String(row[2]).trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('Invalid appointment date');
+        if (!date.startsWith(month + '-')) continue;
+        const time = row[3] instanceof Date
+          ? Utilities.formatDate(row[3], tz, 'HH:mm') : String(row[3]).trim().padStart(5, '0');
+        const duration = Number(row[8]) || 60;
+        if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time) || duration <= 0) throw new Error('Invalid appointment time');
+        appointments.push({ date, time, duration, status: String(row[7] || 'pending') });
+      }
+      result = { success: true, month, appointments };
+    } catch (err) {
+      console.error('Availability load failed', err);
+      result = { success: false, error: 'availability_unavailable' };
+    }
+    const json = JSON.stringify(result);
+    return ContentService.createTextOutput(callback ? callback + '(' + json + ')' : json)
+      .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
+  }
+
   if (action === 'save') {
     const data = {
       id: e.parameter.id,

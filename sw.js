@@ -1,4 +1,4 @@
-const CACHE = 'lr-nails-v4';
+const CACHE = 'lr-nails-v5';
 const ASSETS = ['/', '/booking.html', '/admin.html', '/booking.js', '/booking-ui.js', '/admin-ui.js', '/booking.css', '/style.css'];
 
 const ALLOWED_ORIGINS = [
