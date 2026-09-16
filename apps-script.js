@@ -1,5 +1,164 @@
 const SHEET_ID = '1lHE5n4vMMlL2W7vioDjI60WuH-MAA_QPW62mbYb-I_8';
 const CAL_NAME = 'אופק תרם ניילס 💅';
+const ARCHIVE_SPREADSHEET_ID = '1fQu1XkOW4lPuJUh4CWdym3EmmmWNYEGtVR7n7EwGIxk';
+const ARCHIVE_TAB_NAME = 'ארכיון תורים';
+const ARCHIVE_HEADERS = ['ID','שירות','תאריך','שעה','שם לקוחה','טלפון','הערות','סטטוס','משך','נוצר ב'];
+
+function archiveDate(value, tz) {
+  return value instanceof Date ? Utilities.formatDate(value, tz, 'yyyy-MM-dd') : String(value || '').trim();
+}
+
+function archiveRowValues(row, tz) {
+  return row.map((value, index) => {
+    if (index === 2) return archiveDate(value, tz);
+    if (value instanceof Date) return index === 3
+      ? Utilities.formatDate(value, tz, 'HH:mm') : value.toISOString();
+    return value;
+  });
+}
+
+function checkArchiveHeaders(sheet) {
+  if (sheet.getLastColumn() !== ARCHIVE_HEADERS.length ||
+      JSON.stringify(sheet.getRange(1, 1, 1, 10).getValues()[0]) !== JSON.stringify(ARCHIVE_HEADERS)) {
+    throw new Error('Unexpected appointment columns: no rows were removed');
+  }
+}
+
+function getArchiveSheet(create) {
+  if (ARCHIVE_SPREADSHEET_ID === SHEET_ID) throw new Error('Archive must use a separate spreadsheet');
+  const ss = SpreadsheetApp.openById(ARCHIVE_SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(ARCHIVE_TAB_NAME);
+  if (!sheet && create) {
+    sheet = ss.insertSheet(ARCHIVE_TAB_NAME);
+    sheet.getRange(1, 1, 1, 10).setValues([ARCHIVE_HEADERS]);
+    sheet.setFrozenRows(1);
+    sheet.setRightToLeft(true);
+    sheet.getRange(1, 1, 1, 10).setFontWeight('bold').setBackground('#b76e79').setFontColor('#ffffff');
+  }
+  if (!sheet) throw new Error('Archive not initialized; run setupAppointmentArchive in the script editor');
+  checkArchiveHeaders(sheet);
+  return sheet;
+}
+
+// Run in the Apps Script editor. Does not move data or install a trigger.
+function setupAppointmentArchive() {
+  getArchiveSheet(true);
+  return previewAppointmentArchive();
+}
+
+function archiveCandidates(sheet) {
+  checkArchiveHeaders(sheet);
+  const tz = 'Asia/Jerusalem';
+  const today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  const rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 10).getValues() : [];
+  const ids = new Set();
+  const candidates = [];
+  let skipped = 0;
+  rows.forEach((raw, index) => {
+    const row = archiveRowValues(raw, sheet.getParent().getSpreadsheetTimeZone());
+    const id = String(row[0]);
+    if (!id || !/^\d{4}-\d{2}-\d{2}$/.test(row[2])) { skipped++; return; }
+    if (ids.has(id)) throw new Error('Duplicate appointment ID in active sheet; no rows removed');
+    ids.add(id);
+    if (row[2] < today) candidates.push({ rowNumber: index + 2, row });
+  });
+  return { candidates, skipped, today };
+}
+
+function previewAppointmentArchive() {
+  const data = archiveCandidates(getSheet());
+  const result = { eligible: data.candidates.length, skipped: data.skipped, before: data.today, batchSize: 200 };
+  console.log(JSON.stringify(result));
+  return result;
+}
+
+// Copy, flush, read back and compare before removing any source row.
+// A rerun after interruption reuses identical archive IDs without copying twice.
+function archivePastAppointments() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const source = getSheet();
+    const data = archiveCandidates(source);
+    const batch = data.candidates.slice(0, 200);
+    if (!batch.length) return { moved: 0, remaining: 0, skipped: data.skipped };
+    const target = getArchiveSheet(false);
+    const targetRows = target.getLastRow() > 1 ? target.getRange(2, 1, target.getLastRow() - 1, 10).getValues() : [];
+    const byId = new Map();
+    targetRows.forEach((raw, index) => {
+      const row = archiveRowValues(raw, target.getParent().getSpreadsheetTimeZone());
+      const id = String(row[0]);
+      if (!id || byId.has(id)) throw new Error('Invalid or duplicate archive ID; no source rows removed');
+      byId.set(id, { row, rowNumber: index + 2 });
+    });
+    const additions = [];
+    const firstNewRow = target.getLastRow() + 1;
+    batch.forEach(item => {
+      const id = String(item.row[0]);
+      const existing = byId.get(id);
+      if (existing && JSON.stringify(existing.row) !== JSON.stringify(item.row)) {
+        throw new Error('Archive copy differs from active row; no source rows removed');
+      }
+      if (!existing) {
+        // Avoid interpreting user-entered text as a spreadsheet formula.
+        if (item.row.some(value => typeof value === 'string' && value.startsWith('='))) {
+          throw new Error('Formula-like text requires review; no source rows removed');
+        }
+        byId.set(id, { row: item.row, rowNumber: firstNewRow + additions.length });
+        additions.push(item.row);
+      }
+    });
+    if (additions.length) {
+      const lastNeeded = firstNewRow + additions.length - 1;
+      if (lastNeeded > target.getMaxRows()) target.insertRowsAfter(target.getMaxRows(), lastNeeded - target.getMaxRows());
+      target.getRange(firstNewRow, 1, additions.length, 10).setValues(additions);
+      SpreadsheetApp.flush();
+    }
+    const verified = target.getRange(2, 1, target.getLastRow() - 1, 10).getValues();
+    batch.forEach(item => {
+      const position = byId.get(String(item.row[0])).rowNumber - 2;
+      const copied = archiveRowValues(verified[position], target.getParent().getSpreadsheetTimeZone());
+      if (JSON.stringify(copied) !== JSON.stringify(item.row)) throw new Error('Archive verification failed; source preserved');
+    });
+    // Descending positions remain valid as rows are removed. Recheck each source.
+    for (const item of batch.slice().reverse()) {
+      const current = archiveRowValues(source.getRange(item.rowNumber, 1, 1, 10).getValues()[0], source.getParent().getSpreadsheetTimeZone());
+      if (JSON.stringify(current) !== JSON.stringify(item.row)) throw new Error('Source changed during archive; stopping');
+      source.deleteRow(item.rowNumber);
+    }
+    const result = { moved: batch.length, remaining: data.candidates.length - batch.length, skipped: data.skipped };
+    console.log(JSON.stringify(result));
+    return result;
+  } finally { lock.releaseLock(); }
+}
+
+// Explicit activation from the editor after verifying setup and a first batch.
+function installAppointmentArchiveTrigger() {
+  getArchiveSheet(false);
+  const exists = ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'archivePastAppointments');
+  if (!exists) ScriptApp.newTrigger('archivePastAppointments').timeBased().atHour(3).everyDays(1).inTimezone('Asia/Jerusalem').create();
+}
+
+function queryAppointmentArchive(params) {
+  const month = String(params.month || '');
+  const query = String(params.query || '').trim().toLowerCase().slice(0, 100);
+  const offset = Number(params.offset || 0);
+  if ((month && !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) || !Number.isSafeInteger(offset) || offset < 0) throw new Error('Invalid filter');
+  const sheet = getArchiveSheet(false);
+  const rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 10).getValues() : [];
+  const phoneQuery = query.replace(/\D/g, '');
+  const appointments = rows.map(row => archiveRowValues(row, sheet.getParent().getSpreadsheetTimeZone()))
+    .filter(row => (!month || row[2].startsWith(month + '-')) && (!query ||
+      String(row[4]).toLowerCase().includes(query) || String(row[5]).includes(query) ||
+      (phoneQuery && String(row[5]).replace(/\D/g, '').includes(phoneQuery))))
+    .sort((a, b) => (String(b[2]) + String(b[3]) + String(b[0])).localeCompare(String(a[2]) + String(a[3]) + String(a[0])));
+  return { success: true, total: appointments.length, offset, nextOffset: offset + 50 < appointments.length ? offset + 50 : null,
+    appointments: appointments.slice(offset, offset + 50).map(row => ({
+      id: String(row[0]), serviceName: String(row[1]), date: String(row[2]), time: String(row[3]),
+      clientName: String(row[4]), clientPhone: String(row[5]), notes: String(row[6]), status: String(row[7]),
+      duration: Number(row[8]) || 60, createdAt: String(row[9])
+    })) };
+}
 
 function getSheet() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
@@ -56,8 +215,31 @@ function getOrCreateCalendar() {
 }
 
 function doGet(e) {
+  // Serialize writes with the nightly archive job. Reads do not take this lock.
+  const reads = ['load', 'loadAll', 'availability', 'loadArchive', 'loadSettings',
+    'loadClients', 'lookupClient', 'matchWaitlist', 'loadWaitlist'];
+  const action = e.parameter.action || 'load';
+  if (reads.includes(action)) return handleGet(e);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try { return handleGet(e); } finally { lock.releaseLock(); }
+}
+
+function handleGet(e) {
   const action   = e.parameter.action   || 'load';
   const callback = e.parameter.callback || null;
+
+  if (action === 'loadArchive') {
+    let result;
+    try { result = queryAppointmentArchive(e.parameter); }
+    catch (err) {
+      console.error('Archive read failed', err);
+      result = { success: false, error: 'archive_unavailable' };
+    }
+    const json = JSON.stringify(result);
+    return ContentService.createTextOutput(callback ? callback + '(' + json + ')' : json)
+      .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
+  }
 
   if (action === 'availability') {
     let result;

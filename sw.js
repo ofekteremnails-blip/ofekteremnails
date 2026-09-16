@@ -1,5 +1,5 @@
-const CACHE = 'lr-nails-v5';
-const ASSETS = ['/', '/booking.html', '/admin.html', '/booking.js', '/booking-ui.js', '/admin-ui.js', '/booking.css', '/style.css'];
+const CACHE = 'lr-nails-v6';
+const ASSETS = ['/', '/booking.html', '/admin.html', '/booking.js', '/booking-ui.js', '/admin-ui.js', '/admin-archive.js?v=1', '/booking.css', '/style.css'];
 
 const ALLOWED_ORIGINS = [
   'https://ofekteremnailss.vercel.app',

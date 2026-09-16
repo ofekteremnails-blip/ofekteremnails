@@ -361,6 +361,26 @@
           <input type="date" id="filterDate" class="filter-date"/>
           <button class="btn-clear" id="clearFilter">נקה</button>
         </div>
+        <p style="color:#65434e;margin:12px 0">הרשימה והסיכומים מציגים תורים מהיומן הפעיל. לחיפוש תורים שהועברו לארכיון, פתחי את ההיסטוריה.</p>
+        <details id="appointmentArchive" style="margin:16px 0;padding:16px;border:1px solid #d8c3ca;border-radius:12px;background:#fff">
+          <summary style="cursor:pointer;min-height:44px;font-weight:700">היסטוריית תורים — ארכיון</summary>
+          <p>צפייה בלבד. חפשי לפי שם או טלפון, וסנני לפי חודש. חודש ריק מציג את כל החודשים.</p>
+          <form id="archiveSearchForm" style="display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:16px 0">
+            <label for="archiveQuery" style="display:grid;gap:6px;flex:1 1 180px">שם לקוחה או טלפון
+              <input id="archiveQuery" type="search" maxlength="100" class="filter-date" style="width:100%;min-height:44px"/>
+            </label>
+            <label for="archiveMonth" style="display:grid;gap:6px">חודש
+              <input id="archiveMonth" type="month" class="filter-date" style="min-height:44px"/>
+            </label>
+            <button type="submit" id="archiveSearchButton" class="btn-clear" style="min-height:44px">חיפוש</button>
+          </form>
+          <p id="archiveStatus" role="status" aria-live="polite" style="color:#65434e"></p>
+          <div id="archiveList" class="appt-list" aria-busy="false"></div>
+          <div style="display:flex;gap:12px;margin-top:16px">
+            <button type="button" id="archivePrevious" class="btn-clear" style="min-height:44px" disabled>הקודמים</button>
+            <button type="button" id="archiveNext" class="btn-clear" style="min-height:44px" disabled>הבאים</button>
+          </div>
+        </details>
         <div id="allApptList" class="appt-list"></div>
       </div>
 
@@ -576,5 +596,6 @@
 
   <script src="booking.js" defer></script>
   <script src="admin-ui.js?v=16" defer></script>
+  <script src="admin-archive.js?v=1" defer></script>
 </body>
 </html>
