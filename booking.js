@@ -247,17 +247,26 @@ async function loadSettingsFromSheets() {
   return new Promise((resolve) => {
     const cb = 'ls' + Date.now();
     const url = WEBAPP_URL + '?action=loadSettings&callback=' + cb;
-    window[cb] = (data) => {
-      delete window[cb]; document.getElementById(cb)?.remove();
-      if (data && data.settings) DB.set('settings', data.settings);
-      if (data && data.services) DB.set('services', data.services);
+    const s = document.createElement('script');
+    let settled = false;
+    const finish = data => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      s.remove();
+      window[cb] = () => {};
+      setTimeout(() => { delete window[cb]; }, 60000);
       resolve(data);
     };
-    const s = document.createElement('script');
+    window[cb] = (data) => {
+      if (data && data.settings) DB.set('settings', data.settings);
+      if (data && data.services) DB.set('services', data.services);
+      finish(data);
+    };
     s.id = cb; s.src = url;
-    s.onerror = () => resolve(null);
+    s.onerror = () => finish(null);
+    const timer = setTimeout(() => finish(null), 30000);
     document.body.appendChild(s);
-    setTimeout(() => { delete window[cb]; resolve(null); }, 8000);
   });
 }
 
@@ -523,7 +532,7 @@ async function loadMonthAvailability(year, month) {
 }
 async function fetchMonthAvailability(year, month) {
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-  for (let attempt = 0; attempt < 1; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
     const result = await new Promise(resolve => {
       const cb = 'availability_' + Date.now() + '_' + (++availabilityRequestId);
       const script = document.createElement('script');
@@ -548,7 +557,7 @@ async function fetchMonthAvailability(year, month) {
       };
       script.onerror = () => finish(null, 'network error');
       script.src = WEBAPP_URL + '?action=availability&month=' + monthKey + '&callback=' + cb;
-      const timer = setTimeout(() => finish(null, 'timeout'), 15000);
+      const timer = setTimeout(() => finish(null, 'timeout'), 30000);
       document.body.appendChild(script);
     });
     if (result !== null) return result;

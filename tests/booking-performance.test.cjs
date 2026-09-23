@@ -13,6 +13,9 @@ function browser() {
 }
 (async () => {
   const b = browser(), c = b.context;
+  const recovery=browser(); const recoveryPromise=recovery.context.loadMonthAvailability(2026,8);
+  recovery.timeout(30000); await Promise.resolve(); assert.equal(recovery.scripts.length,2);
+  recovery.reply(recovery.scripts[1],{success:true,month:'2026-09',appointments:[]}); assert.equal((await recoveryPromise).length,0);
   const response = {success:true,month:'2026-09',appointments:[{date:'2026-09-24',time:'10:00',duration:60}]};
   const first=c.loadMonthAvailability(2026,8), second=c.loadMonthAvailability(2026,8);
   assert.equal(b.scripts.length,1); b.reply(b.scripts[0],response);
@@ -22,7 +25,7 @@ function browser() {
   b.reply(b.scripts[1],response); await expired;
   c.invalidateAvailability(); const stale=c.loadMonthAvailability(2026,8); c.invalidateAvailability();
   b.reply(b.scripts[2],response); assert.equal(await stale,null);
-  const timed=c.loadMonthAvailability(2026,8); b.timeout(15000); assert.equal(await timed,null);
+  const timed=c.loadMonthAvailability(2026,8); b.timeout(30000); await Promise.resolve(); b.timeout(30000); assert.equal(await timed,null);
   const retry=c.loadMonthAvailability(2026,8); b.reply(b.scripts.at(-1),{...response,appointments:[]}); assert.equal((await retry).length,0);
   const appt={id:'one',serviceName:'service',duration:60,date:'2026-09-24',time:'10:00',clientName:'Test User',clientPhone:'0501234567',status:'pending'};
   let results=[]; c.saveToSheetsWithConflictCheck({...appt},r=>results.push(r));

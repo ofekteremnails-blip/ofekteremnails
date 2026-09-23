@@ -43,7 +43,7 @@
 
 Implemented in this revision:
 - Availability prefetch on service selection, shared in-flight requests per month, and a 20-second in-page cache. Availability is display-only: booking still checks the active sheet under the server lock.
-- One 15-second availability attempt, followed by the existing visible retry action, instead of two silent 25-second attempts. Errors are never cached as empty availability.
+- Availability allows two 30-second attempts before showing the existing visible retry action. A single 15-second limit proved too aggressive for variable Google response times and was reverted. Errors are never cached as empty availability.
 - Booking confirmation requires explicit server success. Network errors, malformed responses and the 30-second save timeout show an uncertain-save message. Retrying identical details in the same open page reuses the booking ID. This does not persist across page reloads; after reloading, check the existing booking before starting another.
 - Admin bookings update local appointments and close the dialog only after success. Duplicate client-save requests were removed because the server already saves the client.
 - Server save uses one active-sheet read for ID and conflict checks; native Sheets date/time cells are normalized in the spreadsheet timezone. Retries of cancelled or changed slots do not report success.
