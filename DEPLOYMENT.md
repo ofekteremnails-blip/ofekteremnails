@@ -38,3 +38,19 @@
 7. בדקי בטלפון חודש נוכחי, חודש הבא, מעבר מהיר בין חודשים, חודש ריק, בחירת שעה וכשל רשת. שעות תפוסות חייבות להישאר חסומות; כשל רשת חייב לחסום המשך ולאפשר ניסיון חוזר.
 
 המסלול החדש מחזיר רק זמינות לחודש המבוקש וללא פרטי לקוחות. Google Sheets עדיין נסרק בצד השרת; זה מצמצם את התשובה והעבודה בדפדפן, אך אינו אינדקס חודשי בגיליון. הלקוח החדש יציג שגיאה בטוחה מול השרת הישן עד עדכון הפריסה.
+
+## Booking performance and save confirmation (2026-09-23)
+
+Implemented in this revision:
+- Availability prefetch on service selection, shared in-flight requests per month, and a 20-second in-page cache. Availability is display-only: booking still checks the active sheet under the server lock.
+- One 15-second availability attempt, followed by the existing visible retry action, instead of two silent 25-second attempts. Errors are never cached as empty availability.
+- Booking confirmation requires explicit server success. Network errors, malformed responses and the 30-second save timeout show an uncertain-save message. Retrying identical details in the same open page reuses the booking ID. This does not persist across page reloads; after reloading, check the existing booking before starting another.
+- Admin bookings update local appointments and close the dialog only after success. Duplicate client-save requests were removed because the server already saves the client.
+- Server save uses one active-sheet read for ID and conflict checks; native Sheets date/time cells are normalized in the spreadsheet timezone. Retries of cancelled or changed slots do not report success.
+- Apps Script logs `booking_read_ms` (including active row count), `booking_mail_ms`, `booking_save_ms` (includes mail), and `booking_client_ms`. These logs include no client details. They become available only after deploying the updated Apps Script. Use real authorized bookings to compare stages; no test bookings were sent to production.
+
+Deployment: update the existing Apps Script Web App first, preserving its URL, spreadsheet IDs and permissions. Then publish the matching website files together (`booking.js`, `booking-ui.js`, `admin-ui.js`, `booking.html`, `admin.html`). A Git push does not update Apps Script. Before rollout, save the current deployed version for rollback. Verify booking and administration in a browser after deployment. The tests here use mocks and do not prove the deployed Google code matches this checkout.
+
+Further improvements: move mail to a durable outbox with retry processing (requires Google setup), shorten the global lock without weakening slot exclusivity, and inspect the nightly archive execution status/counts. Do not merely remove mail from the critical path without reliable delivery. No archive trigger or data migration was run during this change.
+
+Validation: `node tests/booking-performance.test.cjs`, `node tests/booking-confirmation.test.cjs`, `node tests/booking-server.test.cjs`, `node archive.test.cjs`, `node archive-ui.test.cjs`, `node tests/holidays.test.cjs`. Server tests simulate sequential lock-protected requests to the same slot; actual concurrent Google execution still requires a controlled deployment check.

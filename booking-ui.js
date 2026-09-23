@@ -407,6 +407,8 @@ function toggleService(id) {
   const continueButton = document.getElementById('toStep2');
   continueButton.disabled = selected.services.length === 0;
   if (index < 0) {
+    // Share this request with calendar entry; it contains no client details.
+    loadMonthAvailability(calYear, calMonth);
     continueButton.scrollIntoView({
       behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
       block: 'center'
@@ -696,8 +698,8 @@ function submitBooking(e) {
   };
 
   // שמור ל-Sheets ובדוק קונפליקט בצד השרת (Sheets = מקור האמת)
-  saveToSheetsWithConflictCheck(appt, (conflict) => {
-    if (conflict) {
+  saveToSheetsWithConflictCheck(appt, (result) => {
+    if (result.conflict) {
       showFormError('השעה שבחרת נתפסה זה עתה על ידי מישהו אחר. אנא בחרי שעה אחרת');
       resetBtn();
       selected.time = null;
@@ -706,9 +708,13 @@ function submitBooking(e) {
       refreshAvailability(3);
       return;
     }
+    if (!result.success) {
+      showFormError('לא התקבל אישור לשמירת התור. ייתכן שנשמר — נסי שוב עם אותם פרטים כדי לבדוק, או צרי קשר עם אופק.');
+      resetBtn();
+      return;
+    }
     // עדכן את ה-cache המקומי עם התור החדש
     if (_sheetsAppointments) _sheetsAppointments.push(appt);
-    saveClientToSheets(name, phone);
     currentClient = { name, phone };
     localStorage.setItem('clientSession', JSON.stringify(currentClient));
     showClientGreeting(currentClient);

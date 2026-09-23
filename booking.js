@@ -49,13 +49,20 @@ function saveToSheets(appt) {
   document.body.appendChild(s);
 }
 
+// Reuse the ID after an uncertain response: the server may already have saved it.
+const pendingBookingIds = new Map();
+let bookingSaveRequestId = 0;
 function saveToSheetsWithConflictCheck(appt, onDone) {
   const slim = {
     id: appt.id, serviceName: appt.serviceName, duration: appt.duration,
     date: appt.date, time: appt.time, clientName: appt.clientName,
     clientPhone: appt.clientPhone, notes: appt.notes || '', status: appt.status,
   };
-  const cb = 'sc' + Date.now();
+  const fingerprint = JSON.stringify({ ...slim, id: undefined });
+  if (pendingBookingIds.has(fingerprint)) slim.id = pendingBookingIds.get(fingerprint);
+  else pendingBookingIds.set(fingerprint, slim.id);
+  appt.id = slim.id;
+  const cb = 'sc' + Date.now() + '_' + (++bookingSaveRequestId);
   const url = WEBAPP_URL
     + '?action=save'
     + '&callback=' + cb
@@ -68,13 +75,25 @@ function saveToSheetsWithConflictCheck(appt, onDone) {
     + '&clientPhone=' + encodeURIComponent(slim.clientPhone)
     + '&notes='       + encodeURIComponent(slim.notes)
     + '&status='      + slim.status;
-  window[cb] = (res) => {
-    delete window[cb]; document.getElementById(cb)?.remove();
-    onDone(res && res.conflict === true);
-  };
   const s = document.createElement('script');
   s.id = cb; s.src = url;
-  s.onerror = () => { delete window[cb]; onDone(false); };
+  let settled = false;
+  const finish = result => {
+    if (settled) return;
+    settled = true;
+    clearTimeout(timer);
+    s.remove();
+    window[cb] = () => {};
+    setTimeout(() => { delete window[cb]; }, 60000);
+    invalidateAvailability();
+    if (result.success || result.conflict) pendingBookingIds.delete(fingerprint);
+    onDone(result);
+  };
+  window[cb] = res => finish(res && res.conflict === true
+    ? { success: false, conflict: true }
+    : res && res.success === true ? { success: true } : { success: false, error: 'server' });
+  s.onerror = () => finish({ success: false, error: 'network' });
+  const timer = setTimeout(() => finish({ success: false, error: 'timeout' }), 30000);
   document.body.appendChild(s);
 }
 
@@ -477,9 +496,34 @@ function sendReminderToSheets(appt) {
 
 // Booking availability is separate from the full administrative appointment cache.
 let availabilityRequestId = 0;
+const availabilityCache = new Map();
+const availabilityInFlight = new Map();
+let availabilityGeneration = 0;
+function invalidateAvailability() {
+  availabilityGeneration++;
+  availabilityCache.clear();
+  availabilityInFlight.clear();
+}
 async function loadMonthAvailability(year, month) {
+  const key = `${year}-${month}`;
+  const cached = availabilityCache.get(key);
+  const copy = rows => rows === null ? null : rows.map(row => ({ ...row }));
+  if (cached && Date.now() - cached.time < 20000) return copy(cached.rows);
+  if (availabilityInFlight.has(key)) return copy(await availabilityInFlight.get(key));
+  const generation = availabilityGeneration;
+  const request = fetchMonthAvailability(year, month).then(rows => {
+    if (rows !== null && generation === availabilityGeneration) {
+      availabilityCache.set(key, { time: Date.now(), rows });
+    }
+    return generation === availabilityGeneration ? rows : null;
+  });
+  availabilityInFlight.set(key, request);
+  try { return copy(await request); }
+  finally { if (availabilityInFlight.get(key) === request) availabilityInFlight.delete(key); }
+}
+async function fetchMonthAvailability(year, month) {
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 1; attempt++) {
     const result = await new Promise(resolve => {
       const cb = 'availability_' + Date.now() + '_' + (++availabilityRequestId);
       const script = document.createElement('script');
@@ -504,7 +548,7 @@ async function loadMonthAvailability(year, month) {
       };
       script.onerror = () => finish(null, 'network error');
       script.src = WEBAPP_URL + '?action=availability&month=' + monthKey + '&callback=' + cb;
-      const timer = setTimeout(() => finish(null, 'timeout'), 25000);
+      const timer = setTimeout(() => finish(null, 'timeout'), 15000);
       document.body.appendChild(script);
     });
     if (result !== null) return result;

@@ -285,7 +285,9 @@ function handleGet(e) {
       notes: e.parameter.notes || '',
       status: e.parameter.status || 'pending'
     };
+    const saveStarted = Date.now();
     const result = saveAppointment(data);
+    console.log(JSON.stringify({ metric: 'booking_save_ms', ms: Date.now() - saveStarted }));
     if (result === 'conflict') {
       const json = JSON.stringify({ success: false, conflict: true });
       const out  = callback ? callback + '(' + json + ')' : json;
@@ -293,7 +295,9 @@ function handleGet(e) {
         .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
     }
     // תמיד שמור/עדכן לקוח בטבלת לקוחות
+    const clientStarted = Date.now();
     if (data.clientName && data.clientPhone) saveClient(data.clientName, data.clientPhone);
+    console.log(JSON.stringify({ metric: 'booking_client_ms', ms: Date.now() - clientStarted }));
     const json = JSON.stringify({ success: true });
     const out  = callback ? callback + '(' + json + ')' : json;
     return ContentService.createTextOutput(out)
@@ -491,15 +495,21 @@ function handleGet(e) {
   }
 }
 
-function hasConflict(date, time, duration) {
-  if (getSheet().getLastRow() <= 1) return false;
-  const rows = getSheet().getRange(2, 1, getSheet().getLastRow() - 1, 9).getValues();
+function hasConflict(date, time, duration, rows, tz) {
+  if (!rows) {
+    const sheet = getSheet();
+    const lastRow = sheet.getLastRow();
+    rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, 9).getValues() : [];
+    tz = sheet.getParent().getSpreadsheetTimeZone();
+  }
   const newStart = timeToMins(time);
   const newEnd   = newStart + (Number(duration) || 60);
   for (const row of rows) {
-    if (String(row[2]) !== String(date)) continue;
+    const rowDate = row[2] instanceof Date ? Utilities.formatDate(row[2], tz, 'yyyy-MM-dd') : String(row[2]).trim();
+    if (rowDate !== String(date)) continue;
     if (String(row[7]) === 'cancelled') continue;
-    const s = timeToMins(String(row[3]));
+    const rowTime = row[3] instanceof Date ? Utilities.formatDate(row[3], tz, 'HH:mm') : String(row[3]);
+    const s = timeToMins(rowTime);
     const e = s + (Number(row[8]) || 60);
     if (newStart < e && newEnd > s) return true;
   }
@@ -508,19 +518,7 @@ function hasConflict(date, time, duration) {
 
 // בדיקה למנהל - חוסם אם יש תור confirmed או pending באותה שעה
 function hasConfirmedConflict(date, time, duration) {
-  if (getSheet().getLastRow() <= 1) return false;
-  const rows = getSheet().getRange(2, 1, getSheet().getLastRow() - 1, 9).getValues();
-  const newStart = timeToMins(time);
-  const newEnd   = newStart + (Number(duration) || 60);
-  for (const row of rows) {
-    if (String(row[2]) !== String(date)) continue;
-    const status = String(row[7]);
-    if (status === 'cancelled') continue;
-    const s = timeToMins(String(row[3]));
-    const e = s + (Number(row[8]) || 60);
-    if (newStart < e && newEnd > s) return true;
-  }
-  return false;
+  return hasConflict(date, time, duration);
 }
 
 function timeToMins(t) {
@@ -531,13 +529,24 @@ function timeToMins(t) {
 }
 
 function saveAppointment(data) {
+  const readStarted = Date.now();
   const sheet = getSheet();
-  const ids = sheet.getLastRow() > 1
-    ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat().map(String)
-    : [];
-  if (ids.includes(String(data.id))) return;
-  const conflictCheck = (data.status === 'confirmed') ? hasConfirmedConflict : hasConflict;
-  if (conflictCheck(data.date, data.time, data.duration)) return 'conflict';
+  const lastRow = sheet.getLastRow();
+  const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, 9).getValues() : [];
+  const tz = sheet.getParent().getSpreadsheetTimeZone();
+  console.log(JSON.stringify({ metric: 'booking_read_ms', ms: Date.now() - readStarted, rows: rows.length }));
+  const existing = rows.find(row => String(row[0]) === String(data.id));
+  if (existing) {
+    const date = existing[2] instanceof Date ? Utilities.formatDate(existing[2], tz, 'yyyy-MM-dd') : String(existing[2]).trim();
+    const time = existing[3] instanceof Date ? Utilities.formatDate(existing[3], tz, 'HH:mm') : String(existing[3]).trim().padStart(5, '0');
+    // A retry acknowledges the same active booking, never a different/cancelled one.
+    if (date !== data.date || time !== data.time || String(existing[7]) === 'cancelled'
+        || String(existing[1]) !== String(data.serviceName)
+        || String(existing[5]).replace(/\D/g, '').replace(/^0/, '') !== String(data.clientPhone).replace(/\D/g, '').replace(/^0/, '')
+        || (Number(existing[8]) || 60) !== (Number(data.duration) || 60)) return 'conflict';
+    return;
+  }
+  if (hasConflict(data.date, data.time, data.duration, rows, tz)) return 'conflict';
 
   sheet.appendRow([
     data.id, data.serviceName, data.date, data.time,
@@ -547,6 +556,7 @@ function saveAppointment(data) {
     new Date().toLocaleString('he-IL')
   ]);
 
+  const mailStarted = Date.now();
   try {
     MailApp.sendEmail({
       to: 'ofekteremnails@gmail.com',
@@ -561,6 +571,8 @@ function saveAppointment(data) {
     });
   } catch(mailErr) {
     console.warn('Mail error:', mailErr);
+  } finally {
+    console.log(JSON.stringify({ metric: 'booking_mail_ms', ms: Date.now() - mailStarted }));
   }
 
   try {

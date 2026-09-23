@@ -1074,29 +1074,26 @@ function submitAddAppt() {
 
   const id = generateId();
   const appt = { id, serviceName, serviceIcon, duration, date, time, clientName: name, clientPhone: phone, notes, status: 'confirmed' };
-  const appts = getAppointments();
-  appts.push(appt);
-  saveAppointments(appts);
-
-  // אם לקוח חדש - שמור ב-DB
-  if (_apptClientMode === 'new') {
-    saveClientToSheets(name, phone);
-    const cached = DB.get('clients_cache', null) || [];
-    if (!cached.some(c => c.phone === phone)) {
-      cached.unshift({ name, phone });
-      DB.set('clients_cache', cached);
-    }
-  }
-
-  closeAddApptModal();
-  saveToSheetsWithConflictCheck(appt, (conflict) => {
+  saveToSheetsWithConflictCheck(appt, (result) => {
     _resetAddApptSubmitButton();
-    if (conflict) {
-      saveAppointments(getAppointments().filter(a => a.id !== appt.id));
+    if (result.conflict) {
       showToast('❌ השעה כבר תפוסה, אנא בחרי שעה אחרת', '#e05');
       _loadAdminSlots();
       return;
     }
+    if (!result.success) {
+      showToast('לא התקבל אישור שמירה. ייתכן שהתור נשמר — נסי שוב עם אותם פרטים או בדקי ביומן.', '#e05');
+      return;
+    }
+    saveAppointments([...getAppointments().filter(a => a.id !== appt.id), appt]);
+    if (_apptClientMode === 'new') {
+      const cached = DB.get('clients_cache', null) || [];
+      if (!cached.some(c => c.phone === phone)) {
+        cached.unshift({ name, phone });
+        DB.set('clients_cache', cached);
+      }
+    }
+    closeAddApptModal();
     adminSelectedDate = date;
     if (calView === 'week') renderWeekView();
     else { renderAdminCalendar(); adminSelectDay(date); }
