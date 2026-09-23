@@ -1,4 +1,4 @@
-﻿// ── PANEL SEARCH ──
+// ── PANEL SEARCH ──
 function togglePanelSearch(panel) {
   const wrap = document.getElementById('panelSearch-' + panel);
   const input = document.getElementById('panelSearchInput-' + panel);
@@ -575,28 +575,66 @@ let adminCalYear, adminCalMonth, adminSelectedDate;
 let calView = 'month';
 let weekStart = null;
 
-// חגים ישראליים קבועים (גרגוריאני משוער)
-const IL_HOLIDAYS = {
-  '01-01': 'ראש השנה האזרחי',
-  '04-23': 'יום הזיכרון',
-  '04-24': 'יום העצמאות',
-  '05-14': 'יום ירושלים',
-  '09-22': 'ערב ראש השנה',
-  '09-23': 'ראש השנה',
-  '09-24': 'ראש השנה',
-  '10-01': 'ערב יום כיפור',
-  '10-02': 'יום כיפור',
-  '10-06': 'ערב סוכות',
-  '10-07': 'סוכות',
-  '10-13': 'הושענא רבה',
-  '10-14': 'שמחת תורה',
-  '12-25': 'חנוכה',
-  '12-26': 'חנוכה',
+// Date-only calendar labels use the daytime Hebrew date, with a separate
+// label for the eve. UTC keeps the result independent of the viewer's timezone.
+const hebrewDateFormatter = new Intl.DateTimeFormat('en-u-ca-hebrew', {
+  day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
+});
+const HEBREW_HOLIDAYS = {
+  'Elul-29': 'ערב ראש השנה',
+  'Tishri-1': 'ראש השנה', 'Tishri-2': 'ראש השנה',
+  'Tishri-9': 'ערב יום כיפור', 'Tishri-10': 'יום כיפור',
+  'Tishri-14': 'ערב סוכות', 'Tishri-15': 'סוכות',
+  'Tishri-21': 'הושענא רבה', 'Tishri-22': 'שמיני עצרת ושמחת תורה',
+  'Kislev-24': 'ערב חנוכה', 'Shevat-15': 'ט״ו בשבט',
+  'Nisan-14': 'ערב פסח', 'Nisan-15': 'פסח',
+  'Nisan-20': 'חול המועד פסח · ערב שביעי של פסח',
+  'Nisan-21': 'שביעי של פסח',
+  'Iyar-18': 'ל״ג בעומר', 'Iyar-28': 'יום ירושלים',
+  'Sivan-5': 'ערב שבועות', 'Sivan-6': 'שבועות', 'Av-15': 'ט״ו באב'
 };
 
+function getHebrewDate(date) {
+  const parts = Object.fromEntries(hebrewDateFormatter.formatToParts(date)
+    .filter(part => part.type !== 'literal').map(part => [part.type, part.value]));
+  return { month: parts.month, day: Number(parts.day) };
+}
+
 function getHoliday(dateStr) {
-  const md = dateStr.slice(5); // MM-DD
-  return IL_HOLIDAYS[md] || null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
+  const date = new Date(`${dateStr}T12:00:00Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== dateStr) return null;
+  const { month, day } = getHebrewDate(date);
+  const fixed = HEBREW_HOLIDAYS[`${month}-${day}`];
+  if (fixed) return fixed;
+  if (month === 'Tishri' && day >= 16 && day <= 20) return 'חול המועד סוכות';
+  if (month === 'Nisan' && day >= 16 && day <= 19) return 'חול המועד פסח';
+  if (month === 'Adar' || month === 'Adar II') {
+    if (day === 14) return 'פורים';
+    if (day === 15) return 'שושן פורים';
+  }
+  // Kislev can have 29 or 30 days; count eight days from 25 Kislev.
+  if (month === 'Kislev' || month === 'Tevet') {
+    for (let offset = 0; offset < 8; offset++) {
+      const start = getHebrewDate(new Date(date.getTime() - offset * 86400000));
+      if (start.month === 'Kislev' && start.day === 25) {
+        return dateStr.slice(5) === '01-01' ? 'חנוכה · ראש השנה האזרחי' : 'חנוכה';
+      }
+    }
+  }
+  // Israeli national observances move to avoid Shabbat and its preparations.
+  const weekdayOf = targetDay => new Date(date.getTime() + (targetDay - day) * 86400000).getUTCDay();
+  if (month === 'Nisan') {
+    const weekday = weekdayOf(27);
+    if (day === (weekday === 5 ? 26 : weekday === 0 ? 28 : 27)) return 'יום השואה';
+  }
+  if (month === 'Iyar') {
+    const weekday = weekdayOf(5);
+    const independenceDay = weekday === 5 ? 4 : weekday === 6 ? 3 : weekday === 1 ? 6 : 5;
+    if (day === independenceDay - 1) return 'יום הזיכרון';
+    if (day === independenceDay) return 'יום העצמאות';
+  }
+  return dateStr.slice(5) === '01-01' ? 'ראש השנה האזרחי' : null;
 }
 
 function setCalView(view) {

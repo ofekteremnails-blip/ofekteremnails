@@ -404,7 +404,14 @@ function toggleService(id) {
   });
   
   updateSelectedServicesPreview();
-  document.getElementById('toStep2').disabled = selected.services.length === 0;
+  const continueButton = document.getElementById('toStep2');
+  continueButton.disabled = selected.services.length === 0;
+  if (index < 0) {
+    continueButton.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      block: 'center'
+    });
+  }
 }
 
 function updateSelectedServicesPreview() {
