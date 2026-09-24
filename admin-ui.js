@@ -1104,7 +1104,7 @@ function submitAddAppt() {
     if (calView === 'week') renderWeekView();
     else { renderAdminCalendar(); adminSelectDay(date); }
     refreshCurrentPanel();
-    showToast('✅ התור נשמר והיומן עודכן');
+    _showApptConfirmPopup(appt);
   };
   saveToSheetsWithConflictCheck(appt, handleResult);
 }
