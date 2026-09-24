@@ -996,19 +996,6 @@ function _autoFillEndTime() {
   document.getElementById('addApptTimeEnd').value =
     `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
 }
-// Manual bookings ignore public opening hours, holidays and blocked dates.
-// Only actual appointments occupy time; the server rechecks overlaps on save.
-function getAdminAvailableSlots(dateStr, duration, appointments) {
-  if (!Number.isFinite(duration) || duration <= 0) return [];
-  const occupied = appointments.filter(a => a.date === dateStr && a.status !== 'cancelled')
-    .map(a => ({ start: toMinutes(a.time), end: toMinutes(a.time) + (Number(a.duration) || 60) }));
-  const slots = [];
-  for (let start = 0; start + duration <= 1440; start += 30) {
-    if (!occupied.some(a => start < a.end && start + duration > a.start)) slots.push(fromMinutes(start));
-  }
-  return slots;
-}
-
 function _loadAdminSlots() {
   const dateStr = document.getElementById('addApptDate').value;
   const slotsWrap = document.getElementById('addApptSlotsWrap');
@@ -1021,12 +1008,12 @@ function _loadAdminSlots() {
   slotsWrap.innerHTML = '<p style="font-size:12px;color:#aaa;margin:6px 0">טוען שעות פנויות...</p>';
 
   loadFromSheets().finally(() => {
-    const slots = getAdminAvailableSlots(dateStr, totalDur, getAppointments());
+    const slots = getAvailableSlots(dateStr, totalDur);
     if (slots.length === 0) {
-      slotsWrap.innerHTML = '<p style="font-size:12px;color:#e05;margin:6px 0">אין הצעות ללא חפיפה לתורים קיימים. אפשר להזין שעה ידנית לבדיקה.</p>';
+      slotsWrap.innerHTML = '<p style="font-size:12px;color:#e05;margin:6px 0">🔴 אין שעות פנויות ביום זה</p>';
       return;
     }
-    slotsWrap.innerHTML = '<p style="font-size:12px;color:#666">בניהול ניתן לקבוע גם ביום חסום ומחוץ לשעות העבודה. היום נשאר חסום ללקוחות; אפשר להזין שעה ידנית.</p><div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;max-height:180px;overflow-y:auto">' +
+    slotsWrap.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">' +
       slots.map(t =>
         `<button type="button" onclick="_pickAdminSlot('${t}', this)" style="padding:6px 12px;border:1.5px solid #e0c8d0;border-radius:20px;background:#fff;cursor:pointer;font-size:13px;font-family:inherit">${t}</button>`
       ).join('') + '</div>';
@@ -1087,13 +1074,19 @@ function submitAddAppt() {
 
   const id = generateId();
   const appt = { id, serviceName, serviceIcon, duration, date, time, clientName: name, clientPhone: phone, notes, status: 'confirmed' };
-  saveToSheetsWithConflictCheck(appt, (result) => {
-    _resetAddApptSubmitButton();
+  const handleResult = (result) => {
     if (result.conflict) {
+      if (!appt.allowOverlap && confirm('יש תור חופף בשעה הזו, האם לקבוע בכל זאת?')) {
+        appt.allowOverlap = true;
+        saveToSheetsWithConflictCheck(appt, handleResult);
+        return;
+      }
+      _resetAddApptSubmitButton();
       showToast('❌ השעה כבר תפוסה, אנא בחרי שעה אחרת', '#e05');
       _loadAdminSlots();
       return;
     }
+    _resetAddApptSubmitButton();
     if (!result.success) {
       showToast('לא התקבל אישור שמירה. ייתכן שהתור נשמר — נסי שוב עם אותם פרטים או בדקי ביומן.', '#e05');
       return;
@@ -1111,7 +1104,8 @@ function submitAddAppt() {
     if (calView === 'week') renderWeekView();
     else { renderAdminCalendar(); adminSelectDay(date); }
     _showApptConfirmPopup(appt);
-  });
+  };
+  saveToSheetsWithConflictCheck(appt, handleResult);
 }
 
 function _showApptConfirmPopup(appt) {

@@ -62,3 +62,11 @@ The site now reads availability through `/api/availability?month=YYYY-MM`, a rea
 The function retries a failed Google request once, with 12 seconds per attempt and a 30-second function limit. The browser allows 28 seconds for the API; missing API routes (404 on static/local hosts) use the existing JSONP fallback. Failed responses never become an empty available calendar. This removes the browser-to-Google script dependency but cannot guarantee availability during a Google outage.
 
 Deploy these changes via the existing Git-connected Vercel project; no additional Apps Script deployment is required. Verify `/api/availability?month=2026-09` returns JSON and the browser shows both dates and times. Tests: `node tests/availability-api.test.mjs` and `node tests/availability-transport.test.cjs`, plus the booking regression tests. Rollback by reverting this commit as a unit.
+
+## Manual overlap confirmation (2026-09-24)
+
+Reverts the all-day admin slot suggestions from b1d4d90. The existing manual time inputs and prior suggestions remain. An admin save that receives a conflict asks for confirmation and, only when accepted, retries the same ID with `allowOverlap=true` and `status=confirmed`. Public booking UI does not send that flag; pending bookings cannot override a conflict. Cancelling sends no second request. Existing-ID validation and write locking remain active.
+
+Deploy the updated `apps-script.js` to the existing Web App to enable this behavior; old server deployments continue rejecting overlaps. This uses the application's existing client-side admin access model: `confirmed` is not server-authenticated identity, so this is a UI/workflow distinction, not a new server authorization boundary. Server-side admin authentication remains separate work.
+
+Checks: `node tests/admin-overlap.test.cjs`, `node tests/booking-server.test.cjs`, and booking confirmation/performance regressions. No real appointments were created by these tests.

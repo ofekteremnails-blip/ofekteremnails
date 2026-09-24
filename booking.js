@@ -74,7 +74,8 @@ function saveToSheetsWithConflictCheck(appt, onDone) {
     + '&clientName='  + encodeURIComponent(slim.clientName)
     + '&clientPhone=' + encodeURIComponent(slim.clientPhone)
     + '&notes='       + encodeURIComponent(slim.notes)
-    + '&status='      + slim.status;
+    + '&status='      + slim.status
+    + (appt.status === 'confirmed' && appt.allowOverlap === true ? '&allowOverlap=true' : '');
   const s = document.createElement('script');
   s.id = cb; s.src = url;
   let settled = false;

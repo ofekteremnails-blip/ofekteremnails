@@ -283,7 +283,8 @@ function handleGet(e) {
       clientName: e.parameter.clientName,
       clientPhone: e.parameter.clientPhone,
       notes: e.parameter.notes || '',
-      status: e.parameter.status || 'pending'
+      status: e.parameter.status || 'pending',
+      allowOverlap: e.parameter.status === 'confirmed' && e.parameter.allowOverlap === 'true'
     };
     const saveStarted = Date.now();
     const result = saveAppointment(data);
@@ -546,7 +547,8 @@ function saveAppointment(data) {
         || (Number(existing[8]) || 60) !== (Number(data.duration) || 60)) return 'conflict';
     return;
   }
-  if (hasConflict(data.date, data.time, data.duration, rows, tz)) return 'conflict';
+  if (!(data.status === 'confirmed' && data.allowOverlap === true)
+      && hasConflict(data.date, data.time, data.duration, rows, tz)) return 'conflict';
 
   sheet.appendRow([
     data.id, data.serviceName, data.date, data.time,

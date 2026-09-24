@@ -16,3 +16,13 @@ assert.equal(save({...data,id:'d',time:'11:00'}).success,true);
 rows[0][7]='cancelled';assert.equal(save(data).conflict,true);
 assert.equal(save({...data,id:'e'}).success,true);
 console.log('PASS locked same-slot saves, single sheet read, retry idempotency, native Date cells, adjacent slots and cancellation');
+
+// Manual override requires both the admin booking status and explicit approval.
+context.getOrCreateCalendar=()=>({createEvent(){}});
+assert.equal(save({...data,id:'public-override',allowOverlap:'true'}).conflict,true);
+assert.equal(save({...data,id:'admin-no-override',status:'confirmed'}).conflict,true);
+assert.equal(save({...data,id:'admin-override',status:'confirmed',allowOverlap:'true'}).success,true);
+const count=rows.length;
+assert.equal(save({...data,id:'admin-override',status:'confirmed',allowOverlap:'true'}).success,true);
+assert.equal(rows.length,count);
+console.log('PASS explicit admin overlap approval, public rejection and idempotent override retry');
