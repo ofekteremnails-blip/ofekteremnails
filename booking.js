@@ -52,6 +52,29 @@ function saveToSheets(appt) {
 // Reuse the ID after an uncertain response: the server may already have saved it.
 const pendingBookingIds = new Map();
 let bookingSaveRequestId = 0;
+function verifyBookingSaved(appt) {
+  return new Promise(resolve => {
+    const cb = 'verify_' + Date.now() + '_' + (++bookingSaveRequestId);
+    const script = document.createElement('script');
+    let done = false;
+    const finish = saved => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      script.remove();
+      window[cb] = () => {};
+      setTimeout(() => { delete window[cb]; }, 60000);
+      resolve(saved);
+    };
+    window[cb] = data => finish(!!(data && data.success === true && data.saved === true && data.id === appt.id));
+    script.onerror = () => finish(false);
+    script.src = WEBAPP_URL + '?action=bookingStatus&callback=' + cb
+      + '&id=' + encodeURIComponent(appt.id) + '&date=' + encodeURIComponent(appt.date)
+      + '&time=' + encodeURIComponent(appt.time) + '&duration=' + encodeURIComponent(appt.duration);
+    const timer = setTimeout(() => finish(false), 12000);
+    document.body.appendChild(script);
+  });
+}
 function saveToSheetsWithConflictCheck(appt, onDone) {
   const slim = {
     id: appt.id, serviceName: appt.serviceName, duration: appt.duration,
@@ -83,6 +106,7 @@ function saveToSheetsWithConflictCheck(appt, onDone) {
     if (settled) return;
     settled = true;
     clearTimeout(timer);
+    clearTimeout(verificationTimer);
     s.remove();
     window[cb] = () => {};
     setTimeout(() => { delete window[cb]; }, 60000);
@@ -90,11 +114,28 @@ function saveToSheetsWithConflictCheck(appt, onDone) {
     if (result.success || result.conflict) pendingBookingIds.delete(fingerprint);
     onDone(result);
   };
-  window[cb] = res => finish(res && res.conflict === true
-    ? { success: false, conflict: true }
-    : res && res.success === true ? { success: true } : { success: false, error: 'server' });
-  s.onerror = () => finish({ success: false, error: 'network' });
-  const timer = setTimeout(() => finish({ success: false, error: 'timeout' }), 30000);
+  let verification = null;
+  const verify = () => {
+    if (!verification) verification = verifyBookingSaved(slim).finally(() => { verification = null; });
+    return verification;
+  };
+  const reconcile = async error => {
+    if (settled) return;
+    const saved = await verify();
+    finish(saved ? { success: true, verified: true } : { success: false, error });
+  };
+  window[cb] = res => {
+    if (res && res.conflict === true) finish({ success: false, conflict: true });
+    else if (res && res.success === true) finish({ success: true });
+    else reconcile('server');
+  };
+  s.onerror = () => reconcile('network');
+  // Reads do not acquire the write lock. They can confirm the committed row
+  // while mail/calendar side effects are still running on the server.
+  const verificationTimer = setTimeout(async () => {
+    if (!settled && await verify()) finish({ success: true, verified: true });
+  }, 10000);
+  const timer = setTimeout(() => reconcile('timeout'), 30000);
   document.body.appendChild(s);
 }
 
@@ -104,14 +145,27 @@ function _guessDuration(serviceName) {
   return svc ? svc.duration : 60;
 }
 
+let appointmentsRevision = 0;
+let appointmentsLoadId = 0;
 async function loadFromSheets() {
   return new Promise((resolve) => {
-    const callbackName = 'sheetsCallback_' + Date.now();
+    const requestId = ++appointmentsLoadId;
+    const revision = appointmentsRevision;
+    const callbackName = 'sheetsCallback_' + Date.now() + '_' + requestId;
+    const script = document.createElement('script');
+    let settled = false;
+    const finish = value => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      script.remove();
+      window[callbackName] = () => {};
+      setTimeout(() => { delete window[callbackName]; }, 60000);
+      resolve(value);
+    };
     const url = WEBAPP_URL + '?action=load&callback=' + callbackName;
     window[callbackName] = (rows) => {
-      delete window[callbackName];
-      document.getElementById('jsonpScript')?.remove();
-      if (!Array.isArray(rows) || rows.length === 0) { resolve(null); return; }
+      if (!Array.isArray(rows) || requestId !== appointmentsLoadId || revision !== appointmentsRevision) { finish(null); return; }
       const appts = rows.map(r => {
         let time = String(r['שעה'] || '');
         if (time.includes('T') || time.includes('1899')) {
@@ -138,20 +192,13 @@ async function loadFromSheets() {
         };
       }).filter(a => a.id && a.date);
       saveAppointments(appts);
-      resolve(appts);
+      finish(appts);
     };
-    const script = document.createElement('script');
-    script.id = 'jsonpScript';
+    script.id = callbackName;
     script.src = url;
-    script.onerror = () => { delete window[callbackName]; script.remove(); resolve(null); };
+    script.onerror = () => finish(null);
+    const timer = setTimeout(() => finish(null), 30000);
     document.body.appendChild(script);
-    setTimeout(() => {
-      if (window[callbackName]) {
-        delete window[callbackName];
-        script.remove();
-        resolve(null);
-      }
-    }, 8000);
   });
 }
 
@@ -220,7 +267,7 @@ function getSettings() {
   };
 }
 function getAppointments() { return DB.get('appointments', []); }
-function saveAppointments(arr) { DB.set('appointments', arr); }
+function saveAppointments(arr) { appointmentsRevision++; DB.set('appointments', arr); }
 function saveSettings(s) { DB.set('settings', s); saveSettingsToSheets(s); }
 function saveServices(s) { DB.set('services', s); saveServicesToSheets(s); }
 

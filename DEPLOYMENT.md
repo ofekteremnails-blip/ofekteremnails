@@ -70,3 +70,11 @@ Reverts the all-day admin slot suggestions from b1d4d90. The existing manual tim
 Deploy the updated `apps-script.js` to the existing Web App to enable this behavior; old server deployments continue rejecting overlaps. This uses the application's existing client-side admin access model: `confirmed` is not server-authenticated identity, so this is a UI/workflow distinction, not a new server authorization boundary. Server-side admin authentication remains separate work.
 
 Checks: `node tests/admin-overlap.test.cjs`, `node tests/booking-server.test.cjs`, and booking confirmation/performance regressions. No real appointments were created by these tests.
+
+## Save reconciliation and admin refresh (2026-09-24)
+
+Deploy updated Apps Script to the existing Web App: the new read-only `bookingStatus` action checks the submitted ID, date, time and duration, returns no client details, and does not take the write lock. Booking rows are flushed before mail/calendar work so receipt checks can see the saved row. The browser checks after 10 seconds and again on uncertain save completion; each check is bounded to 12 seconds. A matching saved receipt or explicit save success confirms once, including late success while a receipt check is pending. Otherwise the UI retains the uncertain-save warning, rather than assuming success or automatically writing another booking.
+
+On confirmed admin saves, the entry modal closes, the appointment is merged into local data, the active panel refreshes, and a toast replaces the automatic confirmation popup so the calendar is visible. No production test bookings or messages were sent.
+
+Manual refresh now waits up to 30 seconds, uses unique callbacks, ignores late/out-of-order responses and responses from before a local appointment change, accepts a genuine empty result, and refreshes the active panel. Failed retrieval no longer shows a success toast. Apps Script load errors return an explicit failure object instead of an empty appointment list. Deploy Apps Script to obtain that distinction in production. Regression coverage: `node tests/booking-reconciliation.test.cjs`, server, overlap, booking, archive and archive UI tests.

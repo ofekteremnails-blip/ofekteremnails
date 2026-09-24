@@ -1103,7 +1103,8 @@ function submitAddAppt() {
     adminSelectedDate = date;
     if (calView === 'week') renderWeekView();
     else { renderAdminCalendar(); adminSelectDay(date); }
-    _showApptConfirmPopup(appt);
+    refreshCurrentPanel();
+    showToast('✅ התור נשמר והיומן עודכן');
   };
   saveToSheetsWithConflictCheck(appt, handleResult);
 }
@@ -1259,15 +1260,24 @@ function updateStatusInSheets(id, status) {
   document.body.appendChild(s);
 }
 
+let adminSyncInProgress = false;
 function syncSheets() {
+  if (adminSyncInProgress) return;
+  adminSyncInProgress = true;
   showMiniLoader();
-  loadFromSheets().then(() => {
-    hideMiniLoader();
+  return loadFromSheets().then((appointments) => {
+    if (appointments === null) {
+      showToast('לא התקבלו נתונים חדשים. נסי לרענן שוב.', '#e05');
+      return;
+    }
     _renderDashboard();
+    refreshCurrentPanel();
     showToast('✅ סונכרן בהצלחה!');
   }).catch(() => {
-    hideMiniLoader();
     showToast('❌ שגיאה בסנכרון', '#e05');
+  }).finally(() => {
+    adminSyncInProgress = false;
+    hideMiniLoader();
   });
 }
 

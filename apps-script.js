@@ -216,7 +216,7 @@ function getOrCreateCalendar() {
 
 function doGet(e) {
   // Serialize writes with the nightly archive job. Reads do not take this lock.
-  const reads = ['load', 'loadAll', 'availability', 'loadArchive', 'loadSettings',
+  const reads = ['load', 'loadAll', 'availability', 'bookingStatus', 'loadArchive', 'loadSettings',
     'loadClients', 'lookupClient', 'matchWaitlist', 'loadWaitlist'];
   const action = e.parameter.action || 'load';
   if (reads.includes(action)) return handleGet(e);
@@ -228,6 +228,27 @@ function doGet(e) {
 function handleGet(e) {
   const action   = e.parameter.action   || 'load';
   const callback = e.parameter.callback || null;
+
+  if (action === 'bookingStatus') {
+    let result = { success: false, saved: false };
+    try {
+      const id = String(e.parameter.id || '');
+      if (!id || id.length > 150) throw new Error('Invalid booking ID');
+      const sheet = getSheet();
+      const lastRow = sheet.getLastRow();
+      const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, 9).getValues() : [];
+      const tz = sheet.getParent().getSpreadsheetTimeZone();
+      const row = rows.find(r => String(r[0]) === id);
+      const date = row && (row[2] instanceof Date ? Utilities.formatDate(row[2], tz, 'yyyy-MM-dd') : String(row[2]).trim());
+      const time = row && (row[3] instanceof Date ? Utilities.formatDate(row[3], tz, 'HH:mm') : String(row[3]).trim().padStart(5, '0'));
+      const saved = !!(row && String(row[7]) !== 'cancelled' && date === e.parameter.date && time === e.parameter.time
+        && (Number(row[8]) || 60) === Number(e.parameter.duration));
+      result = { success: true, saved, id };
+    } catch (err) { console.warn('Booking verification failed'); }
+    const json = JSON.stringify(result);
+    return ContentService.createTextOutput(callback ? callback + '(' + json + ')' : json)
+      .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
+  }
 
   if (action === 'loadArchive') {
     let result;
@@ -490,7 +511,8 @@ function handleGet(e) {
     return ContentService.createTextOutput(out)
       .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
   } catch(err) {
-    const out = callback ? callback + '([])' : '[]';
+    const error = JSON.stringify({ success: false, error: 'load_failed' });
+    const out = callback ? callback + '(' + error + ')' : error;
     return ContentService.createTextOutput(out)
       .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
   }
@@ -557,6 +579,7 @@ function saveAppointment(data) {
     Number(data.duration) || 60,
     new Date().toLocaleString('he-IL')
   ]);
+  SpreadsheetApp.flush();
 
   const mailStarted = Date.now();
   try {
