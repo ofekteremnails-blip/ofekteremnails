@@ -54,3 +54,11 @@ Deployment: update the existing Apps Script Web App first, preserving its URL, s
 Further improvements: move mail to a durable outbox with retry processing (requires Google setup), shorten the global lock without weakening slot exclusivity, and inspect the nightly archive execution status/counts. Do not merely remove mail from the critical path without reliable delivery. No archive trigger or data migration was run during this change.
 
 Validation: `node tests/booking-performance.test.cjs`, `node tests/booking-confirmation.test.cjs`, `node tests/booking-server.test.cjs`, `node archive.test.cjs`, `node archive-ui.test.cjs`, `node tests/holidays.test.cjs`. Server tests simulate sequential lock-protected requests to the same slot; actual concurrent Google execution still requires a controlled deployment check.
+
+## Availability transport recovery (2026-09-24)
+
+The site now reads availability through `/api/availability?month=YYYY-MM`, a read-only Vercel function. It requests only the existing public availability action, validates the upstream response, and returns only date, time, duration and status. It accepts GET only and does not forward arbitrary URLs/actions, client data or credentials. Responses use `Cache-Control: no-store`; only the existing 20-second page-memory cache is retained. Booking writes and conflict locking are unchanged.
+
+The function retries a failed Google request once, with 12 seconds per attempt and a 30-second function limit. The browser allows 28 seconds for the API; missing API routes (404 on static/local hosts) use the existing JSONP fallback. Failed responses never become an empty available calendar. This removes the browser-to-Google script dependency but cannot guarantee availability during a Google outage.
+
+Deploy these changes via the existing Git-connected Vercel project; no additional Apps Script deployment is required. Verify `/api/availability?month=2026-09` returns JSON and the browser shows both dates and times. Tests: `node tests/availability-api.test.mjs` and `node tests/availability-transport.test.cjs`, plus the booking regression tests. Rollback by reverting this commit as a unit.

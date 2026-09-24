@@ -532,6 +532,31 @@ async function loadMonthAvailability(year, month) {
 }
 async function fetchMonthAvailability(year, month) {
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+  // The same-origin endpoint follows Google's redirects server-side, without
+  // depending on cross-site script execution or browser cookie settings.
+  if (typeof fetch === 'function') {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 28000);
+    try {
+      const response = await fetch('/api/availability?month=' + monthKey, {
+        signal: controller.signal, cache: 'no-store', credentials: 'omit'
+      });
+      if (response.status !== 404) {
+        if (!response.ok) return null;
+        const data = await response.json();
+        const valid = data && data.success === true && data.month === monthKey
+          && Array.isArray(data.appointments) && data.appointments.every(a => a
+            && typeof a.date === 'string' && a.date.startsWith(monthKey + '-')
+            && /^([01]\d|2[0-3]):[0-5]\d$/.test(a.time)
+            && Number.isFinite(a.duration) && a.duration > 0);
+        return valid ? data.appointments : null;
+      }
+      // Static/local hosts without the API retain the legacy transport.
+    } catch (error) {
+      console.warn('Availability request failed', { reason: error.name });
+      return null;
+    } finally { clearTimeout(timer); }
+  }
   for (let attempt = 0; attempt < 2; attempt++) {
     const result = await new Promise(resolve => {
       const cb = 'availability_' + Date.now() + '_' + (++availabilityRequestId);
