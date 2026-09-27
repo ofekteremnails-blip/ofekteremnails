@@ -688,11 +688,11 @@ function renderAdminCalendar() {
       if (hasConfirmed) dots += `<span class="cal-dot" style="background:#25D366">${dayAppts.filter(a=>a.status==='confirmed').length}</span>`;
       if (hasCompleted) dots += `<span class="cal-dot" style="background:#aaa">${dayAppts.filter(a=>a.status==='completed').length}</span>`;
     }
-    const holidayHtml = holiday ? `<div style="font-size:9px;color:#b76e79;line-height:1;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${holiday}</div>` : '';
+    const holidayHtml = holiday ? `<div class="admin-cal-holiday">${holiday}</div>` : '';
     html += `<div class="${cls}" onclick="adminSelectDay('${dateStr}')" style="flex-direction:column;gap:1px" draggable="false">
       <span style="font-weight:${isToday?'700':'400'}">${d}</span>
       ${holidayHtml}
-      <div style="display:flex;gap:2px;justify-content:center">${dots}</div>
+      <div class="admin-cal-dots">${dots}</div>
     </div>`;
   }
   document.getElementById('adminCalGrid').innerHTML = html;

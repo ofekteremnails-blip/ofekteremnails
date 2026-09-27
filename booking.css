@@ -206,7 +206,7 @@
   margin-bottom: 8px;
 }
 .cal-days-header span { font-size: 11px; color: var(--text-light); font-weight: 500; padding: 4px 0; letter-spacing: 0.5px; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
 .cal-cell {
   aspect-ratio: 1;
   display: flex; align-items: center; justify-content: center;
@@ -614,6 +614,26 @@
 .cal-nav-btn { width: 32px; height: 32px; border-radius: 4px; background: var(--cream); border: 1px solid var(--border); font-size: 18px; color: var(--mauve); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
 .cal-nav-btn:hover { background: var(--deep); color: #fff; border-color: var(--deep); }
 .admin-cal-cell { font-size: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+/* Keep long Hebrew holiday names from enlarging a calendar column. */
+#panel-calendar, #calMonthView, #calWeekView { min-width: 0; }
+#panel-calendar .cal-card { width: 100%; min-width: 0; }
+#panel-calendar .cal-days-header { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+#adminCalGrid .cal-cell { min-width: 0; aspect-ratio: auto; min-height: 72px; }
+#adminCalGrid .admin-cal-cell { padding: 6px 2px; overflow: hidden; }
+#adminCalGrid .admin-cal-cell > * { max-width: 100%; min-width: 0; }
+.admin-cal-holiday { font-size: 10px; color: #8d4f5b; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+.admin-cal-dots { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; }
+#panel-calendar .cal-nav-btn { width: 44px; height: 44px; flex-shrink: 0; }
+#calWeekView .cal-card { max-width: 100%; }
+#weekGrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+#weekGrid > div { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 768px) {
+  #panel-calendar .cal-card { max-width: 100%; padding: 12px 8px; }
+  #adminCalGrid .cal-cell { min-height: 64px; }
+  #panel-calendar .panel-header { flex-wrap: wrap; gap: 12px; }
+  #weekGrid { grid-template-columns: minmax(0, 1fr); }
+  #weekGrid > div { min-height: 0 !important; }
+}
 .day-view-card { background: var(--white); border-radius: 4px; padding: 20px; border: 1px solid var(--border); }
 .day-view-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .day-view-header h2 { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); font-weight: 400; }
