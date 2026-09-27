@@ -87,88 +87,8 @@ function runGlobalSearch() {}
 function _renderGlobalSearchResults() {}
 
 
-const BIOMETRIC_KEY = 'biometricCredentialId';
-
-async function initBiometric() {
-  if (!window.PublicKeyCredential) return;
-  const credId = localStorage.getItem(BIOMETRIC_KEY);
-  if (credId) {
-    // יש Face ID שמור - הצג כפתור ונסה אוטומטית
-    document.getElementById('biometricBtn').style.display = 'flex';
-    document.getElementById('biometricBtn').addEventListener('click', loginWithBiometric);
-    setTimeout(() => loginWithBiometric(), 300);
-  } else {
-    // אין Face ID - הצג כפתור הגדרה מתחת הסיסמא
-    document.getElementById('setupBiometricBtn').style.display = 'block';
-  }
-}
-
-async function loginWithBiometric() {
-  try {
-    const credId = localStorage.getItem(BIOMETRIC_KEY);
-    if (!credId) return;
-    const challenge = new Uint8Array(32);
-    crypto.getRandomValues(challenge);
-    const assertion = await navigator.credentials.get({
-      publicKey: {
-        challenge,
-        allowCredentials: [{ id: base64ToBuffer(credId), type: 'public-key' }],
-        userVerification: 'required',
-        timeout: 60000,
-      }
-    });
-    if (assertion) {
-      document.getElementById('loginOverlay').style.display = 'none';
-      document.getElementById('adminWrap').style.display = 'flex';
-      initAdmin();
-    }
-  } catch(e) {
-    console.log('Biometric failed:', e.message);
-  }
-}
-
-async function setupBiometric() {
-  try {
-    const challenge = new Uint8Array(32);
-    crypto.getRandomValues(challenge);
-    const userId = new Uint8Array(16);
-    crypto.getRandomValues(userId);
-    const credential = await navigator.credentials.create({
-      publicKey: {
-        challenge,
-        rp: { name: '???? ??? ?????', id: location.hostname },
-        user: { id: userId, name: 'admin', displayName: 'Admin' },
-        pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
-        authenticatorSelection: { userVerification: 'required', authenticatorAttachment: 'platform' },
-        timeout: 60000,
-      }
-    });
-    if (credential) {
-      localStorage.setItem(BIOMETRIC_KEY, bufferToBase64(credential.rawId));
-      document.getElementById('biometricBtn').style.display = 'flex';
-      document.getElementById('setupBiometricBtn').style.display = 'none';
-      showToast('✅ Face ID נשמר בהצלחה!');
-    }
-  } catch(e) {
-    showToast('❌ לא ניתן להגדיר Face ID בדפדפן זה', '#e05');
-  }
-}
-
-function bufferToBase64(buffer) {
-  return btoa(String.fromCharCode(...new Uint8Array(buffer)));
-}
-function base64ToBuffer(base64) {
-  const bin = atob(base64);
-  return Uint8Array.from(bin, c => c.charCodeAt(0)).buffer;
-}
-
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
-  initBiometric();
-  document.getElementById('loginBtn').addEventListener('click', tryLogin);
-  document.getElementById('passInput').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
-  document.getElementById('logoutBtn').addEventListener('click', doLogout);
-  document.getElementById('setupBiometricBtn').addEventListener('click', setupBiometric);
   document.querySelectorAll('.snav-btn, .bnav-btn').forEach(btn => btn.addEventListener('click', () => switchPanel(btn.dataset.panel)));
   document.getElementById('filterStatus').addEventListener('change', renderAllAppointments);
   document.getElementById('filterDate').addEventListener('change', renderAllAppointments);
@@ -187,33 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
     resultsEl.innerHTML = results.length ? results.map(a => apptCard(a, true)).join('') : emptyMsg('לא נמצאו תוצאות');
   });
+  initAdmin();
 });
-
-// ── LOGIN ──
-function tryLogin() {
-  const pass = document.getElementById('passInput').value.trim();
-  const settings = getSettings();
-  const correctPass = settings.adminPass || '1234';
-  if (pass === correctPass) {
-    document.getElementById('loginOverlay').style.display = 'none';
-    document.getElementById('adminWrap').style.display = 'flex';
-    // הצג כפתור הגדרת Face ID אם לא הוגדר עדיין
-    if (window.PublicKeyCredential && !localStorage.getItem(BIOMETRIC_KEY)) {
-      document.getElementById('setupBiometricBtn').style.display = 'block';
-    }
-    initAdmin();
-  } else {
-    document.getElementById('loginErr').classList.remove('hidden');
-    document.getElementById('passInput').value = '';
-  }
-}
-
-function doLogout() {
-  document.getElementById('adminWrap').style.display = 'none';
-  document.getElementById('loginOverlay').style.display = 'flex';
-  document.getElementById('passInput').value = '';
-  document.getElementById('loginErr').style.display = 'none';
-}
 
 function initAdmin() {
   requestNotificationPermission();
@@ -2029,9 +1924,6 @@ function saveSettingsHandler() {
   const lbEnd   = document.getElementById('lunchBreakEnd').value;
   if (lbStart && lbEnd) settings.lunchBreak = { start: lbStart, end: lbEnd };
   else delete settings.lunchBreak;
-  const newPass = document.getElementById('newPassInput').value.trim();
-  if (newPass) settings.adminPass = newPass;
-
   document.querySelectorAll('.wd-active').forEach(cb => {
     const dow = cb.dataset.dow;
     const row = cb.closest('.work-day-row');
@@ -2044,7 +1936,6 @@ function saveSettingsHandler() {
 
   saveSettings(settings);
   showToast('✅ הגדרות נשמרו בהצלחה!');
-  document.getElementById('newPassInput').value = '';
 }
 
 // ── CLIENTS LIST ──

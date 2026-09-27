@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0"/>
   <title>ניהול | אופק תרם ניילס</title>
   <link rel="stylesheet" href="style.css?v=4"/>
-  <link rel="stylesheet" href="booking.css?v=6"/>
+  <link rel="stylesheet" href="booking.css?v=7"/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <meta name="theme-color" content="#1a0810"/>
   <link rel="apple-touch-icon" href="logo.png"/>
@@ -18,35 +18,8 @@
 </head>
 <body class="admin-page">
 
-  <!-- ══ LOGIN ══ -->
-  <div class="login-overlay" id="loginOverlay">
-    <div class="login-card">
-      <img src="logo.png" alt="logo" class="login-logo"/>
-      <h2 class="login-title">ברוכה הבאה 👑</h2>
-      <p class="login-sub">לוח הניהול של אופק תרם ניילס</p>
-
-      <button id="biometricBtn" class="btn-biometric" style="display:none">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28">
-          <path d="M7 3H5a2 2 0 00-2 2v2M17 3h2a2 2 0 012 2v2M7 21H5a2 2 0 01-2-2v-2M17 21h2a2 2 0 002-2v-2"/>
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M12 7v1M12 16v1M7 12h1M16 12h1"/>
-        </svg>
-        כניסה עם Face ID
-      </button>
-
-      <div class="login-form" id="passSection">
-        <div class="login-input-wrap">
-          <input type="password" id="passInput" placeholder="סיסמה" autocomplete="current-password"/>
-        </div>
-        <button id="loginBtn" class="btn-login">כניסה</button>
-        <button id="setupBiometricBtn" class="btn-setup-biometric" style="display:none">🔒 הגדר Face ID</button>
-      </div>
-      <p class="login-err hidden" id="loginErr">סיסמה שגויה, נסי שוב</p>
-    </div>
-  </div>
-
   <!-- ══ APP SHELL ══ -->
-  <div class="app-shell" id="adminWrap" style="display:none">
+  <div class="app-shell" id="adminWrap">
 
     <!-- DESKTOP SIDEBAR -->
     <aside class="sidebar" id="sidebar">
@@ -96,10 +69,6 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           דף הבית
         </a>
-        <button class="sidebar-logout" id="logoutBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-          יציאה
-        </button>
       </div>
     </aside>
 
@@ -507,10 +476,6 @@
             <label>סכום מקדמה (₪)</label>
             <input type="number" id="depositAmount" placeholder="50" class="field-input" min="0"/>
           </div>
-          <div class="form-field">
-            <label>סיסמת ניהול</label>
-            <input type="password" id="newPassInput" placeholder="סיסמה חדשה" class="field-input"/>
-          </div>
         </div>
 
         <div class="settings-card">
@@ -595,7 +560,7 @@
   </div><!-- /app-shell -->
 
   <script src="booking.js?v=30" defer></script>
-  <script src="admin-ui.js?v=23" defer></script>
+  <script src="admin-ui.js?v=24" defer></script>
   <script src="admin-archive.js?v=1" defer></script>
 </body>
 </html>
