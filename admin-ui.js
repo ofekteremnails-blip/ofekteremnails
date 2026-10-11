@@ -181,7 +181,7 @@ function showToast(msg, color = '#25D366') {
 }
 
 // ── CONFIRM DIALOG ──
-function showConfirmDialog(msg, onConfirm) {
+function showConfirmDialog(msg, onConfirm, options = {}) {
   let overlay = document.getElementById('confirmDialog');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -215,10 +215,15 @@ function showConfirmDialog(msg, onConfirm) {
     overlay.appendChild(box);
     document.body.appendChild(overlay);
   }
+  const yesBtn = document.getElementById('confirmDialogYes');
+  const noBtn = document.getElementById('confirmDialogNo');
   document.getElementById('confirmDialogMsg').textContent = msg;
+  yesBtn.textContent = options.confirmLabel || 'מחק';
+  noBtn.textContent = options.cancelLabel || 'בטל';
+  yesBtn.style.background = options.confirmColor || '#e05';
   overlay.style.display = 'flex';
-  document.getElementById('confirmDialogYes').onclick = () => { overlay.style.display = 'none'; onConfirm(); };
-  document.getElementById('confirmDialogNo').onclick  = () => { overlay.style.display = 'none'; };
+  yesBtn.onclick = () => { overlay.style.display = 'none'; onConfirm(); };
+  noBtn.onclick  = () => { overlay.style.display = 'none'; };
 }
 
 // ── HELPERS ──
@@ -263,7 +268,9 @@ function apptCard(appt, showDate = false) {
         ${appt.status === 'cancelled' ? `<button onclick="updateStatus('${sanitize(appt.id)}','confirmed')" class="act-btn" style="background:#25D366;color:#fff">↩️ החזר תור</button>` : ''}
         ${appt.status !== 'cancelled' ? `<button onclick="updateStatus('${sanitize(appt.id)}','cancelled')" class="act-btn cancel">✕ בטל</button>` : ''}
         ${appt.status !== 'cancelled' ? `<button onclick="sendCancelWA('${sanitize(appt.id)}')" class="act-btn wa" style="background:#ff9800">💬 וואטסאפ ביטול</button>` : ''}
-        <button onclick="sendReminderWA('${sanitize(appt.id)}')" class="act-btn wa">💬 וואטסאפ</button>
+        ${appt.status === 'cancelled'
+          ? `<button onclick="sendCancelWA('${sanitize(appt.id)}')" class="act-btn wa" style="background:#e05">💬 הודעת ביטול</button>`
+          : `<button onclick="sendReminderWA('${sanitize(appt.id)}')" class="act-btn wa">💬 וואטסאפ</button>`}
         <button onclick="deleteAppt('${sanitize(appt.id)}')" class="act-btn del">🗑</button>
       </div>
     </div>
@@ -1086,6 +1093,7 @@ function updateStatus(id, status) {
   const appt = appts.find(a => a.id === id);
   if (!appt) return;
   const wasConfirmed = appt.status === 'pending' && status === 'confirmed';
+  const wasCancelled = appt.status !== 'cancelled' && status === 'cancelled';
   appt.status = status;
   saveAppointments(appts);
   updateStatusInSheets(id, status);
@@ -1093,6 +1101,13 @@ function updateStatus(id, status) {
     _showApptConfirmPopup(appt);
   }
   refreshCurrentPanel();
+  if (wasCancelled) {
+    showConfirmDialog(
+      'התור בוטל. לשלוח ללקוחה הודעת ביטול ב-WhatsApp?',
+      () => sendCancelWA(id),
+      { confirmLabel: 'שלחי הודעה', cancelLabel: 'לא עכשיו', confirmColor: '#25D366' }
+    );
+  }
 }
 
 function sendConfirmationWA(appt) {
