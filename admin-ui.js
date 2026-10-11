@@ -266,11 +266,8 @@ function apptCard(appt, showDate = false) {
         ${appt.status === 'pending' ? `<button onclick="updateStatus('${sanitize(appt.id)}','confirmed')" class="act-btn confirm">✓ אשר</button>` : ''}
         ${appt.status !== 'completed' && appt.status !== 'cancelled' ? `<button onclick="updateStatus('${sanitize(appt.id)}','completed')" class="act-btn complete">✔ הושלם</button>` : ''}
         ${appt.status === 'cancelled' ? `<button onclick="updateStatus('${sanitize(appt.id)}','confirmed')" class="act-btn" style="background:#25D366;color:#fff">↩️ החזר תור</button>` : ''}
-        ${appt.status !== 'cancelled' ? `<button onclick="updateStatus('${sanitize(appt.id)}','cancelled')" class="act-btn cancel">✕ בטל</button>` : ''}
-        ${appt.status !== 'cancelled' ? `<button onclick="sendCancelWA('${sanitize(appt.id)}')" class="act-btn wa" style="background:#ff9800">💬 וואטסאפ ביטול</button>` : ''}
-        ${appt.status === 'cancelled'
-          ? `<button onclick="sendCancelWA('${sanitize(appt.id)}')" class="act-btn wa" style="background:#e05">💬 הודעת ביטול</button>`
-          : `<button onclick="sendReminderWA('${sanitize(appt.id)}')" class="act-btn wa">💬 וואטסאפ</button>`}
+        ${appt.status !== 'cancelled' ? `<button onclick="confirmCancellation('${sanitize(appt.id)}')" class="act-btn cancel">✕ בטל</button>` : ''}
+        ${appt.status !== 'cancelled' ? `<button onclick="sendReminderWA('${sanitize(appt.id)}')" class="act-btn wa">💬 וואטסאפ</button>` : ''}
         <button onclick="deleteAppt('${sanitize(appt.id)}')" class="act-btn del">🗑</button>
       </div>
     </div>
@@ -1088,6 +1085,14 @@ function clearFilters() {
 }
 
 // ── APPOINTMENT ACTIONS ──
+function confirmCancellation(id) {
+  showConfirmDialog(
+    'בטוחה שתרצי לבטל את התור?',
+    () => updateStatus(id, 'cancelled'),
+    { confirmLabel: 'כן, בטלי', cancelLabel: 'חזרה', confirmColor: '#e05' }
+  );
+}
+
 function updateStatus(id, status) {
   const appts = getAppointments();
   const appt = appts.find(a => a.id === id);
